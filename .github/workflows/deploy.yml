@@ -44,7 +44,7 @@ jobs:
             # https://github.com/actions/deploy-pages/issues/303
             - name: build crates docs
               run: |
-                  cargo doc --all --no-deps
+                  cargo doc --all --no-deps --document-private-items
                   rsync -a target/doc/ dist/
                   rm dist/.lock
             - name: Upload coverage artifact
