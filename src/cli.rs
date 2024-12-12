@@ -3,11 +3,19 @@ use std::path::PathBuf;
 use crate::{commands::movies::Movies, config::Config};
 use clap::{arg, command, value_parser, ArgMatches, Command};
 
+/// A trait for CLI commands
 pub(crate) trait CliCommand {
+    /// Invoke the command
     fn invoke(config: &mut Config, args_matches: &ArgMatches);
+
+    /// Get the subcommand
     fn get_subcommand() -> Command;
 }
 
+/// The CLI main function
+/// Handle all arguments and invoke the correct command
+/// # Panics
+/// May panic
 pub fn cli_main() {
     let matches = command!() // requires `cargo` feature
         .arg(
@@ -43,6 +51,7 @@ pub fn cli_main() {
     }
 }
 
+/// Get input from the user
 pub fn input() -> String {
     use std::io::{stdin, stdout, Write};
     let mut s = String::new();
@@ -60,6 +69,7 @@ pub fn input() -> String {
     s
 }
 
+/// Get a valid path from the user
 pub fn input_path() -> (PathBuf, String) {
     let s = input();
     let mut path = PathBuf::from(s);

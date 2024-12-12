@@ -1,10 +1,13 @@
 [package]
+keywords = ["utility"]
+categories = ["command-line-utilities"]
 name = "n4n5"
 version = "0.1.0"
 edition = "2021"
 description = "n4n5's utility crate"
 license = "MIT"
-
+readme = "../README.md"
+repository = "https://github.com/Its-Just-Nans/n4n5-crate"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

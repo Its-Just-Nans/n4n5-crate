@@ -8,22 +8,37 @@ use crate::{
     config::Config,
 };
 
+/// Movies configuration
 #[derive(Deserialize, Serialize, Default)]
 pub struct Movies {
+    /// Path to the movies file
     pub file_path: Option<String>,
 }
 
+/// Movie data
 #[derive(Deserialize, Debug)]
 pub struct OneMovie {
+    /// Movie title
     pub title: String,
+
+    /// Movie note
     pub note: f64,
+
+    /// Movie publication date
     pub date: u64,
+
+    /// Comment about the movie
     pub comment: String,
+
+    /// Seen date
     pub seen: Option<String>,
+
+    /// Summary of the movie
     pub summary: Option<String>,
 }
 
 impl OneMovie {
+    /// Create a new movie
     pub fn new(
         title: String,
         note: f64,
@@ -41,6 +56,8 @@ impl OneMovie {
             summary,
         }
     }
+
+    /// Display the movie
     pub fn display(&self, show_comment: bool) -> String {
         if show_comment {
             format!(
@@ -94,13 +111,11 @@ impl CliCommand for Movies {
                 let file_path = input_path();
                 let cloned_path = file_path.1.clone();
                 config.update(|config_data| {
-                    if config_data.movies.is_none() {
+                    if let Some(movies) = config_data.movies.as_mut() {
+                        movies.file_path = Some(cloned_path);
+                    } else {
                         config_data.movies = Some(Movies {
                             file_path: Some(cloned_path),
-                        });
-                    } else {
-                        config_data.movies.as_mut().map(|movies| {
-                            movies.file_path = Some(cloned_path);
                         });
                     }
                     config_data
@@ -109,7 +124,7 @@ impl CliCommand for Movies {
             }
         };
         let movies_file_to_str = read_to_string(&file_path)
-            .expect(format!("Unable to read movies file at {}", file_path.display()).as_str());
+            .unwrap_or_else(|_| panic!("Unable to read movies file at {}", file_path.display()));
         let mut all_movies: Vec<OneMovie> =
             serde_json::from_str(&movies_file_to_str).expect("Unable to parse movies file");
         if let Some(matches) = _args_matches.subcommand_matches("show") {
@@ -119,21 +134,20 @@ impl CliCommand for Movies {
 }
 
 impl Movies {
+    /// Print the movies sorted by note
     fn print_sorted_movies(movies: &mut Vec<OneMovie>, matches: &ArgMatches) {
-        let reverse = match matches
-            .get_one::<u8>("reverse")
-            .expect("Counts are defaulted")
-        {
-            0 => false,
-            _ => true,
-        };
-        let show_comment = match matches
-            .get_one::<u8>("comment")
-            .expect("Counts are defaulted")
-        {
-            0 => false,
-            _ => true,
-        };
+        let reverse = !matches!(
+            matches
+                .get_one::<u8>("reverse")
+                .expect("Counts are defaulted"),
+            0
+        );
+        let show_comment = !matches!(
+            matches
+                .get_one::<u8>("comment")
+                .expect("Counts are defaulted"),
+            0
+        );
         movies.sort_by(|a, b| {
             if reverse {
                 b.note.partial_cmp(&a.note).unwrap()
