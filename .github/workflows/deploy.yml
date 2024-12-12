@@ -45,8 +45,8 @@ jobs:
             - name: build crates docs
               run: |
                   cargo doc --all --no-deps
-                  rsync -a target/doc/ dist/crates/
-                  rm dist/crates/.lock
+                  rsync -a target/doc/ dist/
+                  rm dist/.lock
             - name: Upload coverage artifact
               uses: actions/upload-pages-artifact@v3
               with:
