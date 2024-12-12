@@ -95,7 +95,7 @@ impl CliCommand for Movies {
             .arg_required_else_help(true)
     }
 
-    fn invoke(config: &mut Config, _args_matches: &ArgMatches) {
+    fn invoke(config: &mut Config, args_matches: &ArgMatches) {
         let file_path = match &config.config_data.movies {
             Some(movies_config) => movies_config.file_path.clone(),
             None => {
@@ -127,7 +127,7 @@ impl CliCommand for Movies {
             .unwrap_or_else(|_| panic!("Unable to read movies file at {}", file_path.display()));
         let mut all_movies: Vec<OneMovie> =
             serde_json::from_str(&movies_file_to_str).expect("Unable to parse movies file");
-        if let Some(matches) = _args_matches.subcommand_matches("show") {
+        if let Some(matches) = args_matches.subcommand_matches("show") {
             Movies::print_sorted_movies(&mut all_movies, matches);
         }
     }

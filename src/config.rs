@@ -8,7 +8,7 @@ use std::{
 use home::home_dir;
 use serde::{Deserialize, Serialize};
 
-use crate::commands::movies::Movies;
+use crate::commands::{movies::Movies, settings::Settings};
 
 /// Configuration object
 /// It's linked to a configuration file
@@ -31,6 +31,9 @@ pub struct Config {
 pub struct ConfigData {
     /// Movies configuration
     pub movies: Option<Movies>,
+
+    /// Settings configuration
+    pub settings: Option<Settings>,
 }
 
 impl Config {
@@ -74,8 +77,8 @@ impl Config {
     }
 
     /// Set the debug value
-    pub fn set_debug(&mut self, value: &u8) {
-        self.debug = Some(*value);
+    pub fn set_debug(&mut self, value: u8) {
+        self.debug = Some(value);
     }
 
     /// Get the path to the config file

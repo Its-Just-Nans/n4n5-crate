@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use crate::{commands::movies::Movies, config::Config};
+use crate::{
+    commands::{movies::Movies, settings::Settings},
+    config::Config,
+};
 use clap::{arg, command, value_parser, ArgMatches, Command};
 
 /// A trait for CLI commands
@@ -30,6 +33,7 @@ pub fn cli_main() {
             -d --debug ... "Turn debugging information on"
         ))
         .subcommand(Movies::get_subcommand())
+        .subcommand(Settings::get_subcommand())
         .arg_required_else_help(true)
         .get_matches();
     let mut config = match matches.get_one::<PathBuf>("config") {
@@ -42,12 +46,13 @@ pub fn cli_main() {
     {
         0 => {}
         value => {
-            config.set_debug(value);
-            println!("Crazy")
+            config.set_debug(*value);
         }
     }
     if let Some(matches) = matches.subcommand_matches("movies") {
         Movies::invoke(&mut config, matches);
+    } else if let Some(matches) = matches.subcommand_matches("settings") {
+        Settings::invoke(&mut config, matches);
     }
 }
 
@@ -55,7 +60,6 @@ pub fn cli_main() {
 pub fn input() -> String {
     use std::io::{stdin, stdout, Write};
     let mut s = String::new();
-    print!("Please enter some text: ");
     let _ = stdout().flush();
     stdin()
         .read_line(&mut s)

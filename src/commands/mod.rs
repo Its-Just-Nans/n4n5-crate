@@ -1,2 +1,5 @@
 /// Module for the `movies` subcommand.
-pub(crate) mod movies;
+pub mod movies;
+
+/// Module for the `settings` subcommand.
+pub mod settings;
