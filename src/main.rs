@@ -1,3 +1,4 @@
 fn main() {
-    println!("Hello, world!");
+    // read config file
+    n4n5::cli_main();
 }
