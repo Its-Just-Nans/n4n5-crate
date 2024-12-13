@@ -2,7 +2,7 @@
 keywords = ["utility"]
 categories = ["command-line-utilities"]
 name = "n4n5"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "n4n5's utility crate"
 license = "MIT"
