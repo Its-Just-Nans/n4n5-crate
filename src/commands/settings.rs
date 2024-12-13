@@ -70,8 +70,8 @@ impl Settings {
                         settings.save_folder_path = Some(cloned_path);
                     } else {
                         config_data.settings = Some(Settings {
-                            file_paths: vec![],
                             save_folder_path: Some(cloned_path),
+                            ..Default::default()
                         });
                     }
                     config_data
@@ -117,7 +117,7 @@ impl Settings {
             } else {
                 config_data.settings = Some(Settings {
                     file_paths: vec![cloned_path],
-                    save_folder_path: None,
+                    ..Default::default()
                 });
             }
             config_data
