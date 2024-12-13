@@ -72,12 +72,10 @@ pub struct GhPullRequestNode {
 
     /// Created at
     #[serde(rename = "createdAt")]
-
-    /// Created at
     created_at: String,
-    #[serde(rename = "baseRepository")]
 
     /// Base repository
+    #[serde(rename = "baseRepository")]
     base_repository: GhBaseRepository,
 }
 
