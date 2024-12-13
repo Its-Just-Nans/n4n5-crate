@@ -1,3 +1,9 @@
+//!
+//! To see all subcommands, run:
+//! ```shell
+//! n4n5 gh
+//! ```
+//!
 use std::{fs::write, path::PathBuf, process::Command};
 
 use clap::{ArgMatches, Command as ClapCommand};

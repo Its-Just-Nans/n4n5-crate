@@ -1,4 +1,10 @@
 //! # n4n5
+//! n4n5 is a CLI utility with subcommands
+//!
+//! To see all subcommands, run:
+//! ```shell
+//! n4n5
+//! ```
 
 #![deny(
     missing_docs,

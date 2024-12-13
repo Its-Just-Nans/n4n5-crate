@@ -1,3 +1,8 @@
+//! To see all subcommands, run:
+//! ```shell
+//! n4n5 movies
+//! ```
+//!
 use std::{fs::read_to_string, path::PathBuf};
 
 use clap::{arg, ArgMatches, Command};
@@ -75,7 +80,14 @@ impl CliCommand for Movies {
         Command::new("movies")
             .about("movies subcommand")
             .subcommand(Command::new("add").about("adds a movie"))
-            .subcommand(Command::new("stats").about("show stats about movies"))
+            .subcommand(
+                Command::new("stats").about("show stats about movies").arg(
+                    arg!(
+                        -j --json ... "print as json"
+                    )
+                    .required(false),
+                ),
+            )
             .subcommand(
                 Command::new("show")
                     .about("removes a movie")
@@ -129,6 +141,8 @@ impl CliCommand for Movies {
             serde_json::from_str(&movies_file_to_str).expect("Unable to parse movies file");
         if let Some(matches) = args_matches.subcommand_matches("show") {
             Movies::print_sorted_movies(&mut all_movies, matches);
+        } else if let Some(matches) = args_matches.subcommand_matches("stats") {
+            Movies::print_stats(&all_movies, matches);
         }
     }
 }
@@ -157,6 +171,56 @@ impl Movies {
         });
         for movie in movies {
             println!("{}", movie.display(show_comment));
+        }
+    }
+
+    fn get_stats(movies: &Vec<OneMovie>) -> (u64, u64, f64, f64, Vec<(u64, usize)>) {
+        // calculate the min date
+        let min_date = movies.iter().map(|m| m.date).min().unwrap();
+        // calculate the max date
+        let max_date = movies.iter().map(|m| m.date).max().unwrap();
+        // calculate the average note
+        let avg_note = movies.iter().map(|m| m.note).sum::<f64>() / movies.len() as f64;
+        // calculate the median note
+        let mut notes = movies.iter().map(|m| m.note).collect::<Vec<f64>>();
+        notes.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let median_note = notes[notes.len() / 2];
+
+        // group movies by date
+        let movies_by_date =
+            movies
+                .iter()
+                .fold(std::collections::HashMap::new(), |mut acc, movie| {
+                    let entry = acc.entry(movie.date).or_insert_with(Vec::new);
+                    entry.push(movie);
+                    acc
+                });
+        let movies_by_date = movies_by_date
+            .iter()
+            .map(|(date, movies)| (*date, movies.len()))
+            .collect::<Vec<(u64, usize)>>();
+        return (min_date, max_date, avg_note, median_note, movies_by_date);
+    }
+
+    fn print_stats(movies: &Vec<OneMovie>, _matches: &ArgMatches) {
+        let (min_date, max_date, avg_note, median_note, movies_by_date) = Movies::get_stats(movies);
+        match _matches
+            .get_one::<u8>("json")
+            .expect("Counts are defaulted")
+        {
+            0 => {
+                println!("Number of movies: {}", movies.len());
+                println!("Min date: {}", min_date);
+                println!("Max date: {}", max_date);
+                println!("Average note: {:.3}", avg_note);
+                println!("Median note: {:.3}", median_note);
+            }
+            _ => {
+                println!(
+                    "{}",
+                    serde_json::to_string(&movies_by_date).expect("Unable to serialize")
+                );
+            }
         }
     }
 }

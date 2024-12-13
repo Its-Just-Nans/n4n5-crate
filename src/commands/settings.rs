@@ -1,3 +1,8 @@
+//! To see all subcommands, run:
+//! ```shell
+//! n4n5 settings
+//! ```
+//!
 use std::{
     fs::{create_dir_all, read_to_string},
     path::PathBuf,

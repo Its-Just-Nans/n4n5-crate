@@ -8,4 +8,5 @@ pub mod settings;
 pub mod config;
 
 /// Module for the `gh` subcommand.
+/// See [`crate::commands::gh::lib`] for more information.
 pub mod gh;
