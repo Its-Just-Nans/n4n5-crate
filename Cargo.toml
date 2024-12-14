@@ -12,7 +12,11 @@ repository = "https://github.com/Its-Just-Nans/n4n5-crate"
 
 [dependencies]
 clap = { version = "4.5.23", features = ["cargo"] }
+env_logger = "0.11.5"
 home = "0.5.9"
+log = "0.4.22"
+music-exporter = "1.0.5"
 serde = { version = "1.0.216", features = ["derive"] }
 serde_json = "1.0.133"
+tokio = "1.42.0"
 toml = "0.8.19"

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::{
-    commands::{gh::lib::Gh, movies::Movies, sync::SyncCliCommand},
+    commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand},
     config::Config,
 };
 use clap::{arg, command, value_parser, ArgMatches, Command};
@@ -36,6 +36,7 @@ pub fn cli_main() {
         .subcommand(SyncCliCommand::get_subcommand())
         .subcommand(Gh::get_subcommand())
         .subcommand(Config::get_subcommand())
+        .subcommand(MusicCliCommand::get_subcommand())
         .arg_required_else_help(true)
         .get_matches();
     let mut config = match matches.get_one::<PathBuf>("config") {
@@ -59,6 +60,8 @@ pub fn cli_main() {
         Gh::invoke(&mut config, matches);
     } else if let Some(matches) = matches.subcommand_matches("config") {
         Config::invoke(&mut config, matches);
+    } else if let Some(matches) = matches.subcommand_matches("music") {
+        MusicCliCommand::invoke(&mut config, matches);
     }
 }
 

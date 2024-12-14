@@ -1,6 +1,6 @@
 //! To see all subcommands, run:
 //! ```shell
-//! n4n5 settings
+//! n4n5 sync
 //! ```
 //!
 use std::{
@@ -20,7 +20,7 @@ use crate::{
     config_path, config_sub_path,
 };
 
-use super::{config, movies::Movies};
+use super::{movies::Movies, music::MusicCliCommand};
 
 /// Movies configuration
 #[derive(Deserialize, Serialize, Default)]
@@ -65,6 +65,7 @@ impl CliCommand for SyncCliCommand {
                 ),
             )
             .subcommand(ClapCommand::new("programs").about("sync programs"))
+            .subcommand(ClapCommand::new("music").about("sync music"))
             .subcommand(ClapCommand::new("all").about("sync all"))
             .arg_required_else_help(true)
     }
@@ -82,6 +83,8 @@ impl CliCommand for SyncCliCommand {
             SyncCliCommand::sync_programs(config);
         } else if let Some(_matches) = args_matches.subcommand_matches("all") {
             SyncCliCommand::sync_all(config, args_matches);
+        } else if let Some(_matches) = args_matches.subcommand_matches("music") {
+            MusicCliCommand::sync_music(config, args_matches);
         }
     }
 }

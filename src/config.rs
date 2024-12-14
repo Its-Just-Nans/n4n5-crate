@@ -8,7 +8,7 @@ use std::{
 use home::home_dir;
 use serde::{Deserialize, Serialize};
 
-use crate::commands::{gh::lib::Gh, movies::Movies, sync::SyncCliCommand};
+use crate::commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand};
 
 /// Configuration object
 /// It's linked to a configuration file
@@ -32,11 +32,14 @@ pub struct ConfigData {
     /// Movies configuration
     pub movies: Option<Movies>,
 
-    /// Settings configuration
+    /// Sync configuration
     pub sync: Option<SyncCliCommand>,
 
     /// Github configuration
     pub gh: Option<Gh>,
+
+    /// Music configuration
+    pub music: Option<MusicCliCommand>,
 }
 
 impl Config {
