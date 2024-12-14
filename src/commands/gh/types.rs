@@ -1,21 +1,21 @@
 use serde::{Deserialize, Serialize};
 
 /// Github Response
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Debug)]
 pub struct GhResponse {
     /// Data
     pub data: GhData,
 }
 
 /// Data
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Debug)]
 pub struct GhData {
     /// User
     pub user: GhUser,
 }
 
 /// User
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Debug)]
 pub struct GhUser {
     /// Login
     #[serde(rename = "pullRequests")]
@@ -23,7 +23,7 @@ pub struct GhUser {
 }
 
 /// Pull requests
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Debug)]
 pub struct GhPullRequests {
     /// Edges
     pub edges: Vec<GhPullRequest>,
@@ -34,7 +34,7 @@ pub struct GhPullRequests {
 }
 
 /// Page info
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Debug)]
 pub struct GhPageInfo {
     /// End cursor
     #[serde(rename = "endCursor")]
@@ -46,14 +46,14 @@ pub struct GhPageInfo {
 }
 
 /// Pull request
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 pub struct GhPullRequest {
     /// Node
     node: GhPullRequestNode,
 }
 
 /// Pull request node
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 pub struct GhPullRequestNode {
     /// Id
     id: String,
@@ -80,7 +80,7 @@ pub struct GhPullRequestNode {
 }
 
 /// Base repository
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 pub struct GhBaseRepository {
     /// Url
     url: String,
@@ -99,22 +99,50 @@ pub struct GhBaseRepository {
 }
 
 /// Owner
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 pub struct GhOwner {
     /// Login
     login: String,
 }
 
 /// Languages
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 pub struct GhLanguages {
     /// Nodes
     nodes: Vec<GhLanguage>,
 }
 
 /// Language
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 pub struct GhLanguage {
     /// Name of the language
     name: String,
+
+    /// Color of the language
+    color: Option<String>,
+}
+
+/// Github Project Response (gist or repository)
+#[derive(Deserialize, Serialize, Default, Debug)]
+pub struct GhProject {
+    /// Project url
+    pub url: String,
+
+    /// Project name
+    pub name: String,
+
+    /// Project description
+    pub description: Option<String>,
+
+    /// stargazerCount
+    #[serde(rename = "stargazerCount")]
+    pub stargazer_count: i32,
+
+    /// homepageUrl
+    #[serde(rename = "homepageUrl")]
+    pub homepage_url: Option<String>,
+
+    /// primaryLanguage
+    #[serde(rename = "primaryLanguage")]
+    pub primary_language: Option<GhLanguage>,
 }

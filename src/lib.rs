@@ -26,3 +26,6 @@ pub(crate) mod commands;
 pub(crate) mod config;
 
 pub use cli::cli_main;
+
+/// Macros
+pub(crate) mod macros;

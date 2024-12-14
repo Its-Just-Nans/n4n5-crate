@@ -8,14 +8,14 @@ use std::{
 use home::home_dir;
 use serde::{Deserialize, Serialize};
 
-use crate::commands::{gh::lib::Gh, movies::Movies, settings::Settings};
+use crate::commands::{gh::lib::Gh, movies::Movies, sync::SyncCliCommand};
 
 /// Configuration object
 /// It's linked to a configuration file
 #[derive(Deserialize, Default)]
 pub struct Config {
     /// debug level
-    pub debug: Option<u8>,
+    pub debug: u8,
 
     /// path to the configuration file
     pub config_path: PathBuf,
@@ -33,7 +33,7 @@ pub struct ConfigData {
     pub movies: Option<Movies>,
 
     /// Settings configuration
-    pub settings: Option<Settings>,
+    pub sync: Option<SyncCliCommand>,
 
     /// Github configuration
     pub gh: Option<Gh>,
@@ -43,7 +43,7 @@ impl Config {
     /// Parse the config file
     fn parse_config(str_config: &str, path_config: PathBuf) -> Config {
         Config {
-            debug: None,
+            debug: 0,
             config_path: path_config,
             config_data: match toml::from_str(str_config) {
                 Ok(config) => config,
@@ -81,7 +81,7 @@ impl Config {
 
     /// Set the debug value
     pub fn set_debug(&mut self, value: u8) {
-        self.debug = Some(value);
+        self.debug = value;
     }
 
     /// Get the path to the config file

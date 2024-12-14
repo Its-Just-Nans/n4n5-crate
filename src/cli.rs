@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::{
-    commands::{gh::lib::Gh, movies::Movies, settings::Settings},
+    commands::{gh::lib::Gh, movies::Movies, sync::SyncCliCommand},
     config::Config,
 };
 use clap::{arg, command, value_parser, ArgMatches, Command};
@@ -33,7 +33,7 @@ pub fn cli_main() {
             -d --debug ... "Turn debugging information on"
         ))
         .subcommand(Movies::get_subcommand())
-        .subcommand(Settings::get_subcommand())
+        .subcommand(SyncCliCommand::get_subcommand())
         .subcommand(Gh::get_subcommand())
         .subcommand(Config::get_subcommand())
         .arg_required_else_help(true)
@@ -53,8 +53,8 @@ pub fn cli_main() {
     }
     if let Some(matches) = matches.subcommand_matches("movies") {
         Movies::invoke(&mut config, matches);
-    } else if let Some(matches) = matches.subcommand_matches("settings") {
-        Settings::invoke(&mut config, matches);
+    } else if let Some(matches) = matches.subcommand_matches("sync") {
+        SyncCliCommand::invoke(&mut config, matches);
     } else if let Some(matches) = matches.subcommand_matches("gh") {
         Gh::invoke(&mut config, matches);
     } else if let Some(matches) = matches.subcommand_matches("config") {

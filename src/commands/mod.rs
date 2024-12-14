@@ -2,7 +2,7 @@
 pub mod movies;
 
 /// Module for the `settings` subcommand.
-pub mod settings;
+pub mod sync;
 
 /// Module for the `config` subcommand.
 pub mod config;
