@@ -4,7 +4,7 @@
 //! ```
 //!use serde::Serialize;
 
-use std::path::PathBuf;
+use std::{path::PathBuf, process::Command};
 
 use clap::{ArgMatches, Command as ClapCommand};
 use music_exporter::PlatformType;
@@ -32,11 +32,14 @@ impl CliCommand for MusicCliCommand {
         ClapCommand::new("music")
             .about("sync subcommand")
             .subcommand(ClapCommand::new("sync").about("save music"))
+            .subcommand(ClapCommand::new("open").about("open music file"))
             .arg_required_else_help(true)
     }
     fn invoke(config: &mut Config, args_matches: &ArgMatches) {
         if let Some(matches) = args_matches.subcommand_matches("sync") {
             MusicCliCommand::sync_music(config, matches);
+        } else if let Some(_matches) = args_matches.subcommand_matches("open") {
+            MusicCliCommand::open_music_file(config);
         }
     }
 }
@@ -51,6 +54,18 @@ impl MusicCliCommand {
             music_file,
             "the file for music"
         )
+    }
+
+    /// open music file
+    pub fn open_music_file(config: &mut Config) {
+        let music_file = MusicCliCommand::get_music_file_path(config);
+        println!("Opening music file at {}", music_file.display());
+        Command::new("vi")
+            .arg(&music_file)
+            .spawn()
+            .expect("Unable to open config with default editor")
+            .wait()
+            .expect("Error: Editor returned a non-zero status");
     }
 
     /// Sync music
