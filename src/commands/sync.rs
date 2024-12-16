@@ -16,6 +16,7 @@ use std::io::Write;
 
 use crate::{
     cli::{input_path, CliCommand},
+    commands::gh::lib::Gh,
     config::Config,
     config_path, config_sub_path,
 };
@@ -244,5 +245,7 @@ impl SyncCliCommand {
         SyncCliCommand::save_files(config, args_matches);
         println!();
         SyncCliCommand::sync_programs(config);
+        println!();
+        Gh::sync_github(config, None);
     }
 }

@@ -57,9 +57,9 @@ impl CliCommand for Gh {
 
     fn invoke(config: &mut Config, args_matches: &ArgMatches) {
         if let Some(matches) = args_matches.subcommand_matches("pulls") {
-            Gh::save_pulls(config, matches);
+            Gh::save_pulls(config, Some(matches));
         } else if let Some(matches) = args_matches.subcommand_matches("projects") {
-            Gh::save_projects(config, matches);
+            Gh::save_projects(config, Some(matches));
         }
     }
 }
@@ -73,8 +73,15 @@ enum ProjectType {
 }
 
 impl Gh {
+    /// Sync the github data
+    pub fn sync_github(config: &mut Config, matches: Option<&ArgMatches>) {
+        println!("Syncing github data");
+        Gh::save_pulls(config, matches);
+        Gh::save_projects(config, matches);
+    }
+
     /// Save the pulls to the specified file
-    fn save_pulls(config: &mut Config, _matches: &ArgMatches) {
+    fn save_pulls(config: &mut Config, _matches: Option<&ArgMatches>) {
         let pulls_path = config_path!(config, gh, Gh, file_pulls, "pulls file");
         println!("Saving pulls to {}", pulls_path.display());
         let mut response_data = GhPageInfo {
@@ -107,9 +114,10 @@ impl Gh {
                             login
                             }
                             languages(first: 1) {
-                            nodes {
-                                name
-                            }
+                                nodes {
+                                    name
+                                    color
+                                }
                             }
                         }
                         }
@@ -234,8 +242,12 @@ impl Gh {
                         if let Some(Value::Object(user)) = data.get("user") {
                             if let Some(Value::Object(projects)) = user.get(fetch_type) {
                                 if let Some(nodes) = projects.get("nodes") {
-                                    let nodes: Vec<GhProject> =
-                                        serde_json::from_value(nodes.clone()).unwrap();
+                                    let nodes: Vec<GhProject> = serde_json::from_value(
+                                        nodes.clone(),
+                                    )
+                                    .unwrap_or_else(|err| {
+                                        panic!("Unable to parse nodes: {}\n{}", err, nodes)
+                                    });
                                     if debug > 0 {
                                         println!("Received {} {}", nodes.len(), fetch_type);
                                     }
@@ -258,11 +270,14 @@ impl Gh {
     }
 
     /// Save the projects to the specified file
-    fn save_projects(config: &mut Config, matches: &ArgMatches) {
-        let is_json = !matches!(
-            matches.get_one::<u8>("json").expect("Counts are defaulted"),
-            0
-        );
+    fn save_projects(config: &mut Config, matches: Option<&ArgMatches>) {
+        let is_json = match matches {
+            Some(matches) => !matches!(
+                matches.get_one::<u8>("json").expect("Counts are defaulted"),
+                0
+            ),
+            None => false,
+        };
         let projects_path = config_path!(config, gh, Gh, file_projects, "projects file");
         if !is_json {
             println!("Saving projects to {}", projects_path.display());

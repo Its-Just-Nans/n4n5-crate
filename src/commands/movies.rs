@@ -3,9 +3,9 @@
 //! n4n5 movies
 //! ```
 //!
-use std::{collections::BTreeMap, fs::read_to_string, path::PathBuf};
+use std::{collections::BTreeMap, fs::read_to_string, path::PathBuf, process::Command};
 
-use clap::{arg, ArgMatches, Command};
+use clap::{arg, ArgMatches, Command as ClapCommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -24,10 +24,35 @@ pub struct Movies {
     pub public_file_path: Option<String>,
 }
 
+/// Display mode
+pub enum DisplayMode {
+    /// Short display
+    Short,
+
+    /// Display with comment
+    Comment,
+
+    /// Full display
+    Full,
+}
+
 /// All movies data
 pub struct AllMovies {
     /// List of movies
     pub movies: Vec<OneMovie>,
+}
+
+impl AllMovies {
+    /// Display the movies
+    pub fn display(&self, mode: DisplayMode) {
+        for movie in &self.movies {
+            match mode {
+                DisplayMode::Short => println!("{}", movie.display()),
+                DisplayMode::Comment => println!("{}", movie.display_comment()),
+                DisplayMode::Full => println!("{}\n", movie.display_full()),
+            }
+        }
+    }
 }
 
 /// Movie data
@@ -53,57 +78,61 @@ pub struct OneMovie {
 }
 
 impl OneMovie {
-    /// Create a new movie
-    pub fn new(
-        title: String,
-        note: f64,
-        date: u64,
-        comment: String,
-        seen: Option<String>,
-        summary: Option<String>,
-    ) -> Self {
-        OneMovie {
-            title,
-            seen,
-            note,
-            date,
-            comment,
-            summary,
-        }
+    /// Display the movie
+    pub fn display(&self) -> String {
+        format!("{} - {} ({}) ", self.note, self.title, self.date,)
     }
 
-    /// Display the movie
-    pub fn display(&self, show_comment: bool) -> String {
-        if show_comment {
-            format!(
-                "{} - {} ({}) - {}",
-                self.note, self.title, self.date, self.comment
-            )
-        } else {
-            format!("{} - {} ({}) ", self.note, self.title, self.date,)
-        }
+    /// Display the movie with comment
+    pub fn display_comment(&self) -> String {
+        format!(
+            "{} - {} ({}) - {}",
+            self.note, self.title, self.date, self.comment
+        )
+    }
+
+    /// Display the full movie
+    pub fn display_full(&self) -> String {
+        format!(
+            "{} - {} ({}) - {} - {}\n{}",
+            self.note,
+            self.title,
+            self.date,
+            self.seen.as_deref().unwrap_or(""),
+            self.comment,
+            self.summary.as_deref().unwrap_or("")
+        )
     }
 }
 
 impl CliCommand for Movies {
-    fn get_subcommand() -> clap::Command {
-        Command::new("movies")
+    fn get_subcommand() -> ClapCommand {
+        ClapCommand::new("movies")
             .about("movies subcommand")
-            .subcommand(Command::new("add").about("adds a movie"))
+            .subcommand(ClapCommand::new("add").about("adds a movie"))
+            .subcommand(ClapCommand::new("open").about("open movie file"))
             .subcommand(
-                Command::new("stats").about("show stats about movies").arg(
-                    arg!(
-                        -j --json ... "print as json"
-                    )
-                    .required(false),
-                ),
+                ClapCommand::new("stats")
+                    .about("show stats about movies")
+                    .arg(
+                        arg!(
+                            -j --json ... "print as json"
+                        )
+                        .required(false),
+                    ),
             )
             .subcommand(
-                Command::new("show")
+                ClapCommand::new("show")
                     .about("removes a movie")
                     .arg(
                         arg!(
                             -r --reverse ... "Reverse order"
+                        )
+                        .required(false),
+                    )
+                    .arg(
+                        arg!(
+                            -f --full ... "Full display"
                         )
                         .required(false),
                     )
@@ -115,7 +144,7 @@ impl CliCommand for Movies {
                     ),
             )
             .subcommand(
-                Command::new("sync").about("sync movies file").arg(
+                ClapCommand::new("sync").about("sync movies file").arg(
                     arg!(
                         -j --json ... "print as json"
                     )
@@ -132,6 +161,8 @@ impl CliCommand for Movies {
             Movies::print_stats(config, matches);
         } else if let Some(matches) = args_matches.subcommand_matches("sync") {
             Movies::sync_movies(config, Some(matches));
+        } else if let Some(_matches) = args_matches.subcommand_matches("open") {
+            Movies::open_movies(config);
         }
     }
 }
@@ -140,6 +171,18 @@ impl Movies {
     /// Get Movie path
     pub fn get_movie_path(config: &mut Config) -> PathBuf {
         config_path!(config, movies, Movies, file_path, "movies file")
+    }
+
+    /// Open movie file
+    pub fn open_movies(config: &mut Config) {
+        let file_path = Movies::get_movie_path(config);
+        println!("Opening movies file at {}", file_path.display());
+        Command::new("vi")
+            .arg(&file_path)
+            .spawn()
+            .expect("Unable to open config with default editor")
+            .wait()
+            .expect("Error: Editor returned a non-zero status");
     }
 
     /// Get all movies
@@ -157,7 +200,7 @@ impl Movies {
 
     /// Print the movies sorted by note
     fn print_sorted_movies(config: &mut Config, matches: &ArgMatches) {
-        let mut movies = Movies::get_all_movies(config).movies;
+        let mut all_movies = Movies::get_all_movies(config);
         let reverse = !matches!(
             matches
                 .get_one::<u8>("reverse")
@@ -170,15 +213,23 @@ impl Movies {
                 .expect("Counts are defaulted"),
             0
         );
-        movies.sort_by(|a, b| {
+        let show_full = !matches!(
+            matches.get_one::<u8>("full").expect("Counts are defaulted"),
+            0
+        );
+        all_movies.movies.sort_by(|a, b| {
             if reverse {
                 b.note.partial_cmp(&a.note).unwrap()
             } else {
                 a.note.partial_cmp(&b.note).unwrap()
             }
         });
-        for movie in movies {
-            println!("{}", movie.display(show_comment));
+        if show_full {
+            all_movies.display(DisplayMode::Full);
+        } else if show_comment {
+            all_movies.display(DisplayMode::Comment);
+        } else {
+            all_movies.display(DisplayMode::Short);
         }
     }
 
