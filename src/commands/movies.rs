@@ -110,7 +110,14 @@ impl CliCommand for Movies {
         ClapCommand::new("movies")
             .about("movies subcommand")
             .subcommand(ClapCommand::new("add").about("adds a movie"))
-            .subcommand(ClapCommand::new("open").about("open movie file"))
+            .subcommand(
+                ClapCommand::new("open").about("open movie file").arg(
+                    arg!(
+                        -p --path ... "Print the path"
+                    )
+                    .required(false),
+                ),
+            )
             .subcommand(
                 ClapCommand::new("stats")
                     .about("show stats about movies")
@@ -161,8 +168,8 @@ impl CliCommand for Movies {
             Movies::print_stats(config, matches);
         } else if let Some(matches) = args_matches.subcommand_matches("sync") {
             Movies::sync_movies(config, Some(matches));
-        } else if let Some(_matches) = args_matches.subcommand_matches("open") {
-            Movies::open_movies(config);
+        } else if let Some(matches) = args_matches.subcommand_matches("open") {
+            Movies::open_movies(config, matches);
         }
     }
 }
@@ -174,8 +181,16 @@ impl Movies {
     }
 
     /// Open movie file
-    pub fn open_movies(config: &mut Config) {
+    pub fn open_movies(config: &mut Config, matches: &ArgMatches) {
         let file_path = Movies::get_movie_path(config);
+        let only_path = !matches!(
+            matches.get_one::<u8>("path").expect("Counts are defaulted"),
+            0
+        );
+        if only_path {
+            println!("{}", file_path.display());
+            return;
+        }
         println!("Opening movies file at {}", file_path.display());
         Command::new("vi")
             .arg(&file_path)

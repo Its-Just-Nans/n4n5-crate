@@ -76,16 +76,16 @@ impl CliCommand for SyncCliCommand {
             if let Some(matches) = matches.subcommand_matches("add") {
                 SyncCliCommand::add_file(config, matches);
             } else {
-                SyncCliCommand::save_files(config, matches);
+                SyncCliCommand::save_files(config);
             }
         } else if let Some(matches) = args_matches.subcommand_matches("movies") {
             Movies::sync_movies(config, Some(matches));
         } else if let Some(_matches) = args_matches.subcommand_matches("programs") {
             SyncCliCommand::sync_programs(config);
-        } else if let Some(_matches) = args_matches.subcommand_matches("all") {
-            SyncCliCommand::sync_all(config, args_matches);
-        } else if let Some(_matches) = args_matches.subcommand_matches("music") {
-            MusicCliCommand::sync_music(config, args_matches);
+        } else if let Some(matches) = args_matches.subcommand_matches("all") {
+            SyncCliCommand::sync_all(config, matches);
+        } else if let Some(matches) = args_matches.subcommand_matches("music") {
+            MusicCliCommand::sync_music(config, matches);
         }
     }
 }
@@ -100,7 +100,7 @@ impl SyncCliCommand {
     }
 
     /// Save the files to the specified folder
-    fn save_files(config: &mut Config, _matches: &ArgMatches) {
+    fn save_files(config: &mut Config) {
         let files_path = match &config.config_data.sync {
             Some(settings) => settings.file_paths.clone(),
             None => Vec::new(),
@@ -239,10 +239,10 @@ impl SyncCliCommand {
     }
 
     /// Sync all
-    fn sync_all(config: &mut Config, args_matches: &ArgMatches) {
+    fn sync_all(config: &mut Config, _matches: &ArgMatches) {
         Movies::sync_movies(config, None);
         println!();
-        SyncCliCommand::save_files(config, args_matches);
+        SyncCliCommand::save_files(config);
         println!();
         SyncCliCommand::sync_programs(config);
         println!();

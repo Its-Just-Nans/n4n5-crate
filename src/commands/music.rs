@@ -6,7 +6,7 @@
 
 use std::{path::PathBuf, process::Command};
 
-use clap::{ArgMatches, Command as ClapCommand};
+use clap::{arg, ArgMatches, Command as ClapCommand};
 use music_exporter::PlatformType;
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
@@ -32,14 +32,21 @@ impl CliCommand for MusicCliCommand {
         ClapCommand::new("music")
             .about("sync subcommand")
             .subcommand(ClapCommand::new("sync").about("save music"))
-            .subcommand(ClapCommand::new("open").about("open music file"))
+            .subcommand(
+                ClapCommand::new("open").about("open music file").arg(
+                    arg!(
+                        -p --path ... "Print the path"
+                    )
+                    .required(false),
+                ),
+            )
             .arg_required_else_help(true)
     }
     fn invoke(config: &mut Config, args_matches: &ArgMatches) {
         if let Some(matches) = args_matches.subcommand_matches("sync") {
             MusicCliCommand::sync_music(config, matches);
-        } else if let Some(_matches) = args_matches.subcommand_matches("open") {
-            MusicCliCommand::open_music_file(config);
+        } else if let Some(matches) = args_matches.subcommand_matches("open") {
+            MusicCliCommand::open_music_file(config, matches);
         }
     }
 }
@@ -57,8 +64,16 @@ impl MusicCliCommand {
     }
 
     /// open music file
-    pub fn open_music_file(config: &mut Config) {
+    pub fn open_music_file(config: &mut Config, matches: &ArgMatches) {
         let music_file = MusicCliCommand::get_music_file_path(config);
+        let only_path = !matches!(
+            matches.get_one::<u8>("path").expect("Counts are defaulted"),
+            0
+        );
+        if only_path {
+            println!("{}", music_file.display());
+            return;
+        }
         println!("Opening music file at {}", music_file.display());
         Command::new("vi")
             .arg(&music_file)
