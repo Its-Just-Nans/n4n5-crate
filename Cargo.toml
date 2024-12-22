@@ -2,7 +2,7 @@
 keywords = ["utility"]
 categories = ["command-line-utilities"]
 name = "n4n5"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 description = "n4n5's utility crate"
 documentation = "https://docs.rs/n4n5"
@@ -14,7 +14,7 @@ repository = "https://github.com/Its-Just-Nans/n4n5-crate"
 [dependencies]
 clap = { version = "4.5.23", features = ["cargo"] }
 env_logger = "0.11.6"
-home = "0.5.9"
+home = "0.5.11"
 log = "0.4.22"
 music-exporter = "1.0.7"
 serde = { version = "1.0.216", features = ["derive"] }
