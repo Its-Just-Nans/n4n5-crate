@@ -42,7 +42,7 @@ pub struct ProgramsConfig {
     /// Path to the cargo programs
     pub path_cargo_programs: Option<String>,
     /// Path to the vscode extensions
-    pub path_vscode_extenstions: Option<String>,
+    pub path_vscode_extensions: Option<String>,
     /// Path to the nix programs
     pub path_nix: Option<String>,
 }
@@ -212,7 +212,7 @@ impl SyncCliCommand {
             SyncCliCommand,
             programs,
             ProgramsConfig,
-            path_vscode_extenstions,
+            path_vscode_extensions,
             "vscode extensions"
         );
         let vscode_extensions = Command::new("sh")

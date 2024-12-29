@@ -1,4 +1,4 @@
-/// automaticallly generate the input path
+/// automatically generate the input path
 #[macro_export]
 macro_rules! config_path {
     ($config:ident, $setting_name: ident, $struct_name: ident, $key_name: ident, $string: expr) => {
