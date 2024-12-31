@@ -130,7 +130,7 @@ impl CliCommand for Movies {
             )
             .subcommand(
                 ClapCommand::new("show")
-                    .about("removes a movie")
+                    .about("show movies list")
                     .arg(
                         arg!(
                             -r --reverse ... "Reverse order"
