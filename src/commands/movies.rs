@@ -5,7 +5,7 @@
 //!
 use std::{collections::BTreeMap, fs::read_to_string, path::PathBuf, process::Command};
 
-use clap::{arg, ArgMatches, Command as ClapCommand};
+use clap::{arg, ArgAction, ArgMatches, Command as ClapCommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -113,8 +113,9 @@ impl CliCommand for Movies {
             .subcommand(
                 ClapCommand::new("open").about("open movie file").arg(
                     arg!(
-                        -p --path ... "Print the path"
+                        -p --path "Print the path"
                     )
+                    .action(ArgAction::SetTrue)
                     .required(false),
                 ),
             )
@@ -123,8 +124,9 @@ impl CliCommand for Movies {
                     .about("show stats about movies")
                     .arg(
                         arg!(
-                            -j --json ... "print as json"
+                            -j --json "print as json"
                         )
+                        .action(ArgAction::SetTrue)
                         .required(false),
                     ),
             )
@@ -133,28 +135,32 @@ impl CliCommand for Movies {
                     .about("show movies list")
                     .arg(
                         arg!(
-                            -r --reverse ... "Reverse order"
+                            -r --reverse "Reverse order"
                         )
+                        .action(ArgAction::SetTrue)
                         .required(false),
                     )
                     .arg(
                         arg!(
-                            -f --full ... "Full display"
+                            -f --full "Full display"
                         )
+                        .action(ArgAction::SetTrue)
                         .required(false),
                     )
                     .arg(
                         arg!(
-                            -c --comment ... "Show comment"
+                            -c --comment "Show comment"
                         )
+                        .action(ArgAction::SetTrue)
                         .required(false),
                     ),
             )
             .subcommand(
                 ClapCommand::new("sync").about("sync movies file").arg(
                     arg!(
-                        -j --json ... "print as json"
+                        -j --json  "print as json"
                     )
+                    .action(ArgAction::SetTrue)
                     .required(false),
                 ),
             )
@@ -175,18 +181,17 @@ impl CliCommand for Movies {
 }
 
 impl Movies {
-    /// Get Movie path
+    /// Get the movie path
     pub fn get_movie_path(config: &mut Config) -> PathBuf {
         config_path!(config, movies, Movies, file_path, "movies file")
     }
 
     /// Open movie file
+    /// # Panics
+    /// Panics if editor fails
     pub fn open_movies(config: &mut Config, matches: &ArgMatches) {
         let file_path = Movies::get_movie_path(config);
-        let only_path = !matches!(
-            matches.get_one::<u8>("path").expect("Counts are defaulted"),
-            0
-        );
+        let only_path = matches.get_flag("path");
         if only_path {
             println!("{}", file_path.display());
             return;
@@ -201,6 +206,8 @@ impl Movies {
     }
 
     /// Get all movies
+    /// # Panics
+    /// Panics if unable to read the movies file
     pub fn get_all_movies(config: &mut Config) -> AllMovies {
         let file_path = Movies::get_movie_path(config);
         if config.debug > 0 {
@@ -214,24 +221,13 @@ impl Movies {
     }
 
     /// Print the movies sorted by note
+    /// # Panics
+    /// Panics if unable to read the movies file
     fn print_sorted_movies(config: &mut Config, matches: &ArgMatches) {
         let mut all_movies = Movies::get_all_movies(config);
-        let reverse = !matches!(
-            matches
-                .get_one::<u8>("reverse")
-                .expect("Counts are defaulted"),
-            0
-        );
-        let show_comment = !matches!(
-            matches
-                .get_one::<u8>("comment")
-                .expect("Counts are defaulted"),
-            0
-        );
-        let show_full = !matches!(
-            matches.get_one::<u8>("full").expect("Counts are defaulted"),
-            0
-        );
+        let reverse = matches.get_flag("reverse");
+        let show_comment = matches.get_flag("comment");
+        let show_full = matches.get_flag("full");
         all_movies.movies.sort_by(|a, b| {
             if reverse {
                 b.note.partial_cmp(&a.note).unwrap()
@@ -263,15 +259,15 @@ impl Movies {
     /// Get the stats of the movies
     fn get_stats(movies: &AllMovies) -> (u64, u64, f64, f64) {
         // calculate the min date
-        let min_date = movies.movies.iter().map(|m| m.date).min().unwrap();
+        let min_date = movies.movies.iter().map(|m| m.date).min().unwrap_or(0);
         // calculate the max date
-        let max_date = movies.movies.iter().map(|m| m.date).max().unwrap();
+        let max_date = movies.movies.iter().map(|m| m.date).max().unwrap_or(0);
         // calculate the average note
         let avg_note =
             movies.movies.iter().map(|m| m.note).sum::<f64>() / movies.movies.len() as f64;
         // calculate the median note
         let mut notes = movies.movies.iter().map(|m| m.note).collect::<Vec<f64>>();
-        notes.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        notes.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         let median_note = notes[notes.len() / 2];
 
         (min_date, max_date, avg_note, median_note)
@@ -281,10 +277,7 @@ impl Movies {
     fn print_stats(config: &mut Config, matches: &ArgMatches) {
         let movies = Movies::get_all_movies(config);
         let (min_date, max_date, avg_note, median_note) = Movies::get_stats(&movies);
-        let is_json = !matches!(
-            matches.get_one::<u8>("json").expect("Counts are defaulted"),
-            0
-        );
+        let is_json = matches.get_flag("json");
         if is_json {
             let stats = serde_json::json!({
                 "movies": movies.movies.len(),
@@ -304,6 +297,8 @@ impl Movies {
     }
 
     /// Sync the public movie file
+    /// # Panics
+    /// Panics if unable to write the movies file
     pub fn sync_movies(config: &mut Config, opt_matches: Option<&ArgMatches>) {
         let movies = Movies::get_all_movies(config);
         let public_movies_path = config_path!(
@@ -314,10 +309,7 @@ impl Movies {
             "the public file for movies"
         );
         let is_json = match opt_matches {
-            Some(matches) => !matches!(
-                matches.get_one::<u8>("json").expect("Counts are defaulted"),
-                0
-            ),
+            Some(matches) => matches.get_flag("json"),
             None => false,
         };
         let movies_by_date = Movies::group_movies_by_date(&movies);
@@ -342,7 +334,7 @@ impl Movies {
             );
         } else {
             std::fs::write(&public_movies_path, buf).expect("Unable to write movies file");
-            println!("Movies file saved to {:?}", public_movies_path);
+            println!("Movies file saved to '{}'", public_movies_path.display());
         }
     }
 }

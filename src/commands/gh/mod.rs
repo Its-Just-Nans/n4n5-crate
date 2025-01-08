@@ -1,5 +1,5 @@
-/// Module for the `gh` subcommand.
-pub mod lib;
+//! Module for the `gh` subcommand.
+//! See [`crate::commands::gh::lib`] for more information.
 
-/// Type for github graphql api
-pub mod types;
+pub(crate) mod lib;
+pub(crate) mod types;

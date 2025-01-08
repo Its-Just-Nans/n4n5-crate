@@ -1,6 +1,7 @@
+//! Config subcommand
 use std::process::Command;
 
-use clap::{arg, ArgMatches, Command as ClapCommand};
+use clap::{arg, ArgAction, ArgMatches, Command as ClapCommand};
 
 use crate::{cli::CliCommand, config::Config};
 
@@ -13,8 +14,9 @@ impl CliCommand for Config {
                     .about("open config with default editor")
                     .arg(
                         arg!(
-                            -p --path ... "Print the path"
+                            -p --path "Print the path"
                         )
+                        .action(ArgAction::SetTrue)
                         .required(false),
                     ),
             )
@@ -30,12 +32,11 @@ impl CliCommand for Config {
 
 impl Config {
     /// Open the config file with the default editor
+    /// # Panics
+    /// Panics if the editor returns a non-zero status
     fn open(config: &mut Config, matches: &ArgMatches) {
         let config_path = &config.config_path;
-        let only_path = !matches!(
-            matches.get_one::<u8>("path").expect("Counts are defaulted"),
-            0
-        );
+        let only_path = matches.get_flag("path");
         if only_path {
             println!("{}", config_path.display());
             return;

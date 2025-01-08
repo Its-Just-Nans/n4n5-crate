@@ -1,3 +1,4 @@
+//! Type for github graphql api
 use serde::{Deserialize, Serialize};
 
 /// Github Response

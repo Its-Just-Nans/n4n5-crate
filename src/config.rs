@@ -1,14 +1,14 @@
+//! Configuration module
+
+use crate::commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand};
+use home::home_dir;
+use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir_all, read_to_string, File},
     io::Write,
     path::PathBuf,
     str,
 };
-
-use home::home_dir;
-use serde::{Deserialize, Serialize};
-
-use crate::commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand};
 
 /// Configuration object
 /// It's linked to a configuration file
@@ -44,7 +44,7 @@ pub struct ConfigData {
 
 impl Config {
     /// Parse the config file
-    fn parse_config(str_config: &str, path_config: PathBuf) -> Config {
+    fn parse_config(str_config: &str, path_config: PathBuf) -> Self {
         Config {
             debug: 0,
             config_path: path_config,
@@ -60,14 +60,18 @@ impl Config {
     }
 
     /// Create a new Config object from the default path
-    pub fn new() -> Config {
+    /// # Panics
+    /// Panics if the file can't be opened
+    pub fn new() -> Self {
         let config_path = Config::get_config_path();
         let contents = read_to_string(config_path.clone())
-            .unwrap_or_else(|_| panic!("Unable to open {:?}", config_path));
+            .unwrap_or_else(|_| panic!("Unable to open '{}'", config_path.display()));
         Config::parse_config(&contents, config_path)
     }
 
     /// Save the config data to the config file
+    /// # Panics
+    /// Panics if the file can't be created or written to
     pub fn save(&self) {
         let config_str = toml::to_string(&self.config_data).expect("Unable to serialize config");
         let mut file = File::create(&self.config_path).expect("Unable to create config file");
@@ -76,7 +80,9 @@ impl Config {
     }
 
     /// Create a new Config object from a custom path
-    pub fn new_from_path(custom_path: &PathBuf) -> Config {
+    /// # Panics
+    /// Panics if the file can't be opened
+    pub fn new_from_path(custom_path: &PathBuf) -> Self {
         let contents = read_to_string(custom_path.clone())
             .unwrap_or_else(|_| panic!("Unable to open {:?}", custom_path));
         Config::parse_config(&contents, custom_path.clone())
@@ -88,6 +94,8 @@ impl Config {
     }
 
     /// Get the path to the config file
+    /// # Panics
+    /// Panics if the home directory can't be found
     pub fn get_config_path() -> PathBuf {
         let home_dir = match home_dir() {
             Some(path) if !path.as_os_str().is_empty() => Ok(path),

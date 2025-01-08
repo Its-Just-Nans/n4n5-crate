@@ -1,5 +1,6 @@
+//! This module contains the macros used in the project
+
 /// automatically generate the input path
-#[macro_export]
 macro_rules! config_path {
     ($config:ident, $setting_name: ident, $struct_name: ident, $key_name: ident, $string: expr) => {
         match &$config.config_data.$setting_name {
@@ -31,9 +32,9 @@ macro_rules! config_path {
         }
     };
 }
+pub(crate) use config_path;
 
 /// automatically generate the input path
-#[macro_export]
 macro_rules! config_sub_path {
     ($config:ident, $setting_name: ident, $struct_name: ident, $key_name: ident, $sub_struct_name: ident, $sub_key_name: ident, $string: expr) => {
         match &$config.config_data.$setting_name {
@@ -78,3 +79,4 @@ macro_rules! config_sub_path {
         }
     };
 }
+pub(crate) use config_sub_path;

@@ -1,3 +1,4 @@
+//! The CLI module
 use std::path::PathBuf;
 
 use crate::{
@@ -66,6 +67,8 @@ pub fn cli_main() {
 }
 
 /// Get input from the user
+/// # Panics
+/// Panics if the input is not a valid string
 pub fn input() -> String {
     use std::io::{stdin, stdout, Write};
     let mut s = String::new();
@@ -83,6 +86,8 @@ pub fn input() -> String {
 }
 
 /// Get a valid path from the user
+/// # Panics
+/// Panics if the path is not valid
 pub fn input_path() -> (PathBuf, String) {
     let s = input();
     let mut path = PathBuf::from(s);

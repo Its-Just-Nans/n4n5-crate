@@ -1,14 +1,12 @@
-//!
 //! To see all subcommands, run:
 //! ```shell
 //! n4n5 gh
 //! ```
-//!
-use std::{fs::write, path::PathBuf, process::Command};
 
-use clap::{arg, ArgMatches, Command as ClapCommand};
+use clap::{arg, ArgAction, ArgMatches, Command as ClapCommand};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::{fs::write, path::PathBuf, process::Command};
 
 use crate::{
     cli::{input_path, CliCommand},
@@ -39,16 +37,18 @@ impl CliCommand for Gh {
             .subcommand(
                 ClapCommand::new("pulls").about("save pulls").arg(
                     arg!(
-                        -j --json ... "print as json"
+                        -j --json "print as json"
                     )
+                    .action(ArgAction::SetTrue)
                     .required(false),
                 ),
             )
             .subcommand(
                 ClapCommand::new("projects").about("save projects").arg(
                     arg!(
-                        -j --json ... "print as json"
+                        -j --json "print as json"
                     )
+                    .action(ArgAction::SetTrue)
                     .required(false),
                 ),
             )
@@ -81,6 +81,8 @@ impl Gh {
     }
 
     /// Save the pulls to the specified file
+    /// # Panics
+    /// Panics if unable to write to file
     fn save_pulls(config: &mut Config, _matches: Option<&ArgMatches>) {
         let pulls_path = config_path!(config, gh, Gh, file_pulls, "pulls file");
         println!("Saving pulls to {}", pulls_path.display());
@@ -168,6 +170,8 @@ impl Gh {
     }
 
     /// Fetch projects with gh cli
+    /// # Panics
+    /// Panics if unable to parse json from gh command
     fn fetch_projects(project_type: ProjectType, debug: u8) -> Vec<GhProject> {
         let mut response_data = GhPageInfo {
             has_next_page: true,
@@ -270,12 +274,11 @@ impl Gh {
     }
 
     /// Save the projects to the specified file
+    /// # Panics
+    /// Panics if unable to write to file
     fn save_projects(config: &mut Config, matches: Option<&ArgMatches>) {
         let is_json = match matches {
-            Some(matches) => !matches!(
-                matches.get_one::<u8>("json").expect("Counts are defaulted"),
-                0
-            ),
+            Some(matches) => matches.get_flag("json"),
             None => false,
         };
         let projects_path = config_path!(config, gh, Gh, file_projects, "projects file");

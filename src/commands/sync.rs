@@ -55,6 +55,7 @@ impl CliCommand for SyncCliCommand {
                 ClapCommand::new("settings")
                     .about("save settings")
                     .subcommand(ClapCommand::new("add").about("add a file to save"))
+                    .subcommand(ClapCommand::new("all").about("add a file to save"))
                     .arg_required_else_help(true),
             )
             .subcommand(
@@ -75,7 +76,7 @@ impl CliCommand for SyncCliCommand {
         if let Some(matches) = args_matches.subcommand_matches("settings") {
             if let Some(matches) = matches.subcommand_matches("add") {
                 SyncCliCommand::add_file(config, matches);
-            } else {
+            } else if let Some(_matches) = matches.subcommand_matches("all") {
                 SyncCliCommand::save_files(config);
             }
         } else if let Some(matches) = args_matches.subcommand_matches("movies") {
@@ -92,6 +93,8 @@ impl CliCommand for SyncCliCommand {
 
 impl SyncCliCommand {
     /// Get the home path
+    /// # Panics
+    /// Panics if the home directory is not found
     fn get_home_path() -> (PathBuf, String) {
         let path_buf = home::home_dir().expect("Unable to get home directory");
         let path = path_buf.clone();
@@ -100,6 +103,8 @@ impl SyncCliCommand {
     }
 
     /// Save the files to the specified folder
+    /// # Panics
+    /// Panics if the file cannot be read or written
     fn save_files(config: &mut Config) {
         let files_path = match &config.config_data.sync {
             Some(settings) => settings.file_paths.clone(),
@@ -123,13 +128,17 @@ impl SyncCliCommand {
                 },
             )
             .collect::<Vec<PathBuf>>();
-        println!("Saving {} files to {:?}", files_path.len(), folder_path);
+        println!(
+            "Saving {} files to '{}'",
+            files_path.len(),
+            folder_path.display()
+        );
         for file_path_to_save in files_path {
             let input_path = home_pathbuf.join(&file_path_to_save);
             let file_content = read_to_string(&input_path)
                 .unwrap_or_else(|_| panic!("Unable to open {:?}", input_path));
             let save_path = folder_path.join(&file_path_to_save);
-            println!("Saving {:?} to {:?}", input_path, save_path);
+            println!("- '{}' to '{}'", input_path.display(), save_path.display());
             if let Some(parent) = save_path.parent() {
                 create_dir_all(parent)
                     .unwrap_or_else(|_| panic!("Unable to create save folder {:?}", parent));
@@ -160,6 +169,8 @@ impl SyncCliCommand {
     }
 
     /// Sync the cargo programs
+    /// # Panics
+    /// Panics if the cargo command cannot be run
     fn sync_programs_cargo(config: &mut Config) {
         let cargo_path = config_sub_path!(
             config,
@@ -183,6 +194,8 @@ impl SyncCliCommand {
     }
 
     /// Sync the nix-env programs
+    /// # Panics
+    /// Panics if the nix command cannot be run
     fn sync_programs_nix(config: &mut Config) {
         let nix_path = config_sub_path!(
             config,
@@ -205,6 +218,8 @@ impl SyncCliCommand {
     }
 
     /// Sync the vscode extensions
+    /// # Panics
+    /// Panics if the vscode command cannot be run
     fn sync_programs_vscode(config: &mut Config) {
         let vscode_path = config_sub_path!(
             config,
