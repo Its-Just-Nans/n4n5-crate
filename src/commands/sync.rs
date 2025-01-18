@@ -4,15 +4,14 @@
 //! ```
 //!
 use std::{
-    fs::write,
-    fs::{create_dir_all, read_to_string},
+    fs::{create_dir_all, write, File},
+    io,
     path::PathBuf,
     process::Command,
 };
 
 use clap::{arg, ArgMatches, Command as ClapCommand};
 use serde::{Deserialize, Serialize};
-use std::io::Write;
 
 use crate::{
     cli::{input_path, CliCommand},
@@ -135,7 +134,7 @@ impl SyncCliCommand {
         );
         for file_path_to_save in files_path {
             let input_path = home_pathbuf.join(&file_path_to_save);
-            let file_content = read_to_string(&input_path)
+            let mut file_input = File::open(&input_path)
                 .unwrap_or_else(|_| panic!("Unable to open {:?}", input_path));
             let save_path = folder_path.join(&file_path_to_save);
             println!("- '{}' to '{}'", input_path.display(), save_path.display());
@@ -143,10 +142,10 @@ impl SyncCliCommand {
                 create_dir_all(parent)
                     .unwrap_or_else(|_| panic!("Unable to create save folder {:?}", parent));
             }
-            let mut file = std::fs::File::create(&save_path)
+            let mut file = File::create(&save_path)
                 .unwrap_or_else(|_| panic!("Unable to create file {:?}", save_path));
-            file.write_all(file_content.as_bytes())
-                .expect("Unable to write to file");
+
+            io::copy(&mut file_input, &mut file).expect("Unable to write to file");
         }
     }
 
