@@ -66,6 +66,12 @@ pub fn cli_main() {
     }
 }
 
+/// Get input from the user with a prompt
+pub fn get_input(text: &str) -> String {
+    println!("{}", text);
+    input()
+}
+
 /// Get input from the user
 /// # Panics
 /// Panics if the input is not a valid string

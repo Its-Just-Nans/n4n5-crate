@@ -9,7 +9,7 @@ use clap::{arg, ArgAction, ArgMatches, Command as ClapCommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli::{input_path, CliCommand},
+    cli::{get_input, input_path, CliCommand},
     config::Config,
     config_path,
 };
@@ -56,7 +56,7 @@ impl AllMovies {
 }
 
 /// Movie data
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct OneMovie {
     /// Movie title
     pub title: String,
@@ -176,6 +176,8 @@ impl CliCommand for Movies {
             Movies::sync_movies(config, Some(matches));
         } else if let Some(matches) = args_matches.subcommand_matches("open") {
             Movies::open_movies(config, matches);
+        } else if let Some(matches) = args_matches.subcommand_matches("add") {
+            Movies::add_movie(config, matches);
         }
     }
 }
@@ -184,6 +186,33 @@ impl Movies {
     /// Get the movie path
     pub fn get_movie_path(config: &mut Config) -> PathBuf {
         config_path!(config, movies, Movies, file_path, "movies file")
+    }
+
+    /// Add a movie
+    /// # Panics
+    /// Panics if unable to write the movies file
+    fn add_movie(config: &mut Config, _matches: &ArgMatches) {
+        let file_path = Movies::get_movie_path(config);
+        let title = get_input("Title");
+        let note = get_input("Note").parse().expect("Unable to parse note");
+        let date = get_input("Date").parse().expect("Unable to parse note");
+        let comment = get_input("Comment");
+        let seen = get_input("Seen");
+        let summary = get_input("Summary");
+        let movie = OneMovie {
+            title,
+            note,
+            date,
+            comment,
+            seen: Some(seen),
+            summary: Some(summary),
+        };
+        let mut all_movies = Movies::get_all_movies(config);
+        all_movies.movies.push(movie);
+        let movies_file_to_str = serde_json::to_string_pretty(&all_movies.movies)
+            .expect("Unable to serialize movies file");
+        std::fs::write(&file_path, movies_file_to_str).expect("Unable to write movies file");
+        println!("Movie added to '{}'", file_path.display());
     }
 
     /// Open movie file
