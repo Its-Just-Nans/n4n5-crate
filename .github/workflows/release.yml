@@ -108,9 +108,6 @@ jobs:
                     arm-unknown-linux-*) sudo apt-get -y update ; sudo apt-get -y install gcc-arm-linux-gnueabihf ;;
                     aarch64-unknown-linux-gnu) sudo apt-get -y update ; sudo apt-get -y install gcc-aarch64-linux-gnu ;;
                   esac
-                  case ${{ matrix.job.os }} in
-                    ubuntu-22.04) sudo apt-get -y update ; sudo apt-get -y install openssl ;;
-                  esac
 
             - name: Install Rust toolchain
               uses: dtolnay/rust-toolchain@stable
