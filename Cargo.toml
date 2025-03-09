@@ -9,7 +9,7 @@ readme = "./README.md"
 repository = "https://github.com/Its-Just-Nans/n4n5-crate"
 keywords = ["utility"]
 categories = ["command-line-utilities"]
-rust-version = "1.77.2"
+rust-version = "1.83.0"
 
 [dependencies]
 clap = { version = "4.5.26", features = ["cargo"] }
