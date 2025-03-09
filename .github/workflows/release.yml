@@ -24,7 +24,7 @@ jobs:
             - name: Extract crate information
               id: crate_metadata
               run: |
-                  echo "name=fd" | tee -a $GITHUB_OUTPUT
+                  echo "name=n4n5" | tee -a $GITHUB_OUTPUT
                   cargo metadata --no-deps --format-version 1 | jq -r '"version=" + .packages[0].version' | tee -a $GITHUB_OUTPUT
                   cargo metadata --no-deps --format-version 1 | jq -r '"maintainer=" + .packages[0].authors[0]' | tee -a $GITHUB_OUTPUT
                   cargo metadata --no-deps --format-version 1 | jq -r '"homepage=" + .packages[0].homepage' | tee -a $GITHUB_OUTPUT
