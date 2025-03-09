@@ -195,7 +195,7 @@ jobs:
                   cp "${{ steps.bin.outputs.BIN_PATH }}" "$ARCHIVE_DIR"
 
                   # README, LICENSE and CHANGELOG files
-                  cp "README.md" "LICENSE-MIT" "LICENSE-APACHE" "CHANGELOG.md" "$ARCHIVE_DIR"
+                  cp "README.md" "LICENSE" "CHANGELOG.md" "$ARCHIVE_DIR"
 
                   # Man page
                   cp 'doc/${{ needs.crate_metadata.outputs.name }}.1' "$ARCHIVE_DIR"
