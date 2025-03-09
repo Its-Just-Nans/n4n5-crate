@@ -4,13 +4,16 @@ use std::path::PathBuf;
 use crate::{
     commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand},
     config::Config,
+    errors::GeneralError,
 };
 use clap::{arg, command, value_parser, ArgMatches, Command};
 
 /// A trait for CLI commands
 pub(crate) trait CliCommand {
     /// Invoke the command
-    fn invoke(config: &mut Config, args_matches: &ArgMatches);
+    /// # Errors
+    /// Returns a GeneralError if the command fails
+    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError>;
 
     /// Get the subcommand
     fn get_subcommand() -> Command;
@@ -18,9 +21,9 @@ pub(crate) trait CliCommand {
 
 /// The CLI main function
 /// Handle all arguments and invoke the correct command
-/// # Panics
-/// May panic
-pub fn cli_main() {
+/// # Errors
+/// Returns a GeneralError if the command fails
+pub fn cli_main() -> Result<(), GeneralError> {
     let matches = command!() // requires `cargo` feature
         .arg(
             arg!(
@@ -41,12 +44,12 @@ pub fn cli_main() {
         .arg_required_else_help(true)
         .get_matches();
     let mut config = match matches.get_one::<PathBuf>("config") {
-        Some(config_path) => Config::new_from_path(config_path),
+        Some(config_path) => Config::new_from_path(config_path.clone())?,
         None => Config::new(),
     };
     match matches
         .get_one::<u8>("debug")
-        .expect("Counts are defaulted")
+        .ok_or_else(|| GeneralError::new("Debug value not found".to_string()))?
     {
         0 => {}
         value => {
@@ -54,16 +57,17 @@ pub fn cli_main() {
         }
     }
     if let Some(matches) = matches.subcommand_matches("movies") {
-        Movies::invoke(&mut config, matches);
+        return Movies::invoke(&mut config, matches);
     } else if let Some(matches) = matches.subcommand_matches("sync") {
-        SyncCliCommand::invoke(&mut config, matches);
+        return SyncCliCommand::invoke(&mut config, matches);
     } else if let Some(matches) = matches.subcommand_matches("gh") {
-        Gh::invoke(&mut config, matches);
+        return Gh::invoke(&mut config, matches);
     } else if let Some(matches) = matches.subcommand_matches("config") {
-        Config::invoke(&mut config, matches);
+        return Config::invoke(&mut config, matches);
     } else if let Some(matches) = matches.subcommand_matches("music") {
-        MusicCliCommand::invoke(&mut config, matches);
+        return MusicCliCommand::invoke(&mut config, matches);
     }
+    Ok(())
 }
 
 /// Get input from the user with a prompt

@@ -26,7 +26,7 @@ macro_rules! config_path {
                         });
                     }
                     config_data
-                });
+                })?;
                 file_path.0
             }
         }
@@ -73,7 +73,7 @@ macro_rules! config_sub_path {
                         }
                     }
                     config_data
-                });
+                })?;
                 file_path.0
             }
         }

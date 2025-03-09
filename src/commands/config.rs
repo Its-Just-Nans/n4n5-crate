@@ -3,7 +3,7 @@ use std::process::Command;
 
 use clap::{arg, ArgAction, ArgMatches, Command as ClapCommand};
 
-use crate::{cli::CliCommand, config::Config};
+use crate::{cli::CliCommand, config::Config, errors::GeneralError};
 
 impl CliCommand for Config {
     fn get_subcommand() -> ClapCommand {
@@ -23,30 +23,27 @@ impl CliCommand for Config {
             .arg_required_else_help(true)
     }
 
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) {
+    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
         if let Some(matches) = args_matches.subcommand_matches("open") {
-            Config::open(config, matches);
+            return Config::open(config, matches);
         }
+        Ok(())
     }
 }
 
 impl Config {
     /// Open the config file with the default editor
-    /// # Panics
-    /// Panics if the editor returns a non-zero status
-    fn open(config: &mut Config, matches: &ArgMatches) {
+    /// # Errors
+    /// Return an error if the editor fails to open
+    fn open(config: &mut Config, matches: &ArgMatches) -> Result<(), GeneralError> {
         let config_path = &config.config_path;
         let only_path = matches.get_flag("path");
         if only_path {
             println!("{}", config_path.display());
-            return;
+            return Ok(());
         }
         println!("Opening config {}", config_path.display());
-        Command::new("vi")
-            .arg(config_path)
-            .spawn()
-            .expect("Unable to open config with default editor")
-            .wait()
-            .expect("Error: Editor returned a non-zero status");
+        Command::new("vi").arg(config_path).spawn()?.wait()?;
+        Ok(())
     }
 }

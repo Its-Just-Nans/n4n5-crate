@@ -18,6 +18,7 @@ use crate::{
     commands::gh::lib::Gh,
     config::Config,
     config_path, config_sub_path,
+    errors::GeneralError,
 };
 
 use super::{movies::Movies, music::MusicCliCommand};
@@ -71,40 +72,44 @@ impl CliCommand for SyncCliCommand {
             .arg_required_else_help(true)
     }
 
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) {
+    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
         if let Some(matches) = args_matches.subcommand_matches("settings") {
             if let Some(matches) = matches.subcommand_matches("add") {
-                SyncCliCommand::add_file(config, matches);
+                return SyncCliCommand::add_file(config, matches);
             } else if let Some(_matches) = matches.subcommand_matches("all") {
-                SyncCliCommand::save_files(config);
+                return SyncCliCommand::save_files(config);
             }
         } else if let Some(matches) = args_matches.subcommand_matches("movies") {
-            Movies::sync_movies(config, Some(matches));
+            return Movies::sync_movies(config, Some(matches));
         } else if let Some(_matches) = args_matches.subcommand_matches("programs") {
-            SyncCliCommand::sync_programs(config);
+            return SyncCliCommand::sync_programs(config);
         } else if let Some(matches) = args_matches.subcommand_matches("all") {
-            SyncCliCommand::sync_all(config, matches);
+            return SyncCliCommand::sync_all(config, matches);
         } else if let Some(matches) = args_matches.subcommand_matches("music") {
-            MusicCliCommand::sync_music(config, matches);
+            return MusicCliCommand::sync_music(config, matches);
         }
+        Ok(())
     }
 }
 
 impl SyncCliCommand {
     /// Get the home path
-    /// # Panics
-    /// Panics if the home directory is not found
-    fn get_home_path() -> (PathBuf, String) {
-        let path_buf = home::home_dir().expect("Unable to get home directory");
+    /// # Errors
+    /// Returns an error if the home directory cannot be found
+    fn get_home_path() -> Result<(PathBuf, String), GeneralError> {
+        let path_buf = home::home_dir()
+            .ok_or_else(|| GeneralError::new("Cannot find home directory".to_string()))?;
         let path = path_buf.clone();
-        let path = path.to_str().expect("Unable to convert path to string");
-        (path_buf, path.to_string())
+        let path = path.to_str().ok_or_else(|| {
+            GeneralError::new("Cannot convert home directory to string".to_string())
+        })?;
+        Ok((path_buf, path.to_string()))
     }
 
     /// Save the files to the specified folder
-    /// # Panics
-    /// Panics if the file cannot be read or written
-    fn save_files(config: &mut Config) {
+    /// # Errors
+    /// Returns an error if the file cannot be saved
+    fn save_files(config: &mut Config) -> Result<(), GeneralError> {
         let files_path = match &config.config_data.sync {
             Some(settings) => settings.file_paths.clone(),
             None => Vec::new(),
@@ -117,7 +122,7 @@ impl SyncCliCommand {
             "settings folder"
         );
 
-        let (home_pathbuf, _) = SyncCliCommand::get_home_path();
+        let (home_pathbuf, _) = SyncCliCommand::get_home_path()?;
         let files_path = files_path
             .iter()
             .map(
@@ -134,23 +139,23 @@ impl SyncCliCommand {
         );
         for file_path_to_save in files_path {
             let input_path = home_pathbuf.join(&file_path_to_save);
-            let mut file_input = File::open(&input_path)
-                .unwrap_or_else(|_| panic!("Unable to open {:?}", input_path));
+            let mut file_input = File::open(&input_path)?;
             let save_path = folder_path.join(&file_path_to_save);
             println!("- '{}' to '{}'", input_path.display(), save_path.display());
             if let Some(parent) = save_path.parent() {
-                create_dir_all(parent)
-                    .unwrap_or_else(|_| panic!("Unable to create save folder {:?}", parent));
+                create_dir_all(parent)?;
             }
-            let mut file = File::create(&save_path)
-                .unwrap_or_else(|_| panic!("Unable to create file {:?}", save_path));
+            let mut file = File::create(&save_path)?;
 
-            io::copy(&mut file_input, &mut file).expect("Unable to write to file");
+            io::copy(&mut file_input, &mut file)?;
         }
+        Ok(())
     }
 
     /// Add a file to the list of files to save
-    fn add_file(config: &mut Config, _matches: &ArgMatches) {
+    /// # Errors
+    /// Returns an error if the file path is invalid
+    fn add_file(config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
         println!("Please enter the path to the file to add:");
         let file_path = input_path();
         let cloned_path = file_path.1.clone();
@@ -164,13 +169,14 @@ impl SyncCliCommand {
                 });
             }
             config_data
-        });
+        })?;
+        Ok(())
     }
 
     /// Sync the cargo programs
-    /// # Panics
-    /// Panics if the cargo command cannot be run
-    fn sync_programs_cargo(config: &mut Config) {
+    /// # Errors
+    /// Returns an error if the command fails
+    fn sync_programs_cargo(config: &mut Config) -> Result<(), GeneralError> {
         let cargo_path = config_sub_path!(
             config,
             sync,
@@ -183,19 +189,17 @@ impl SyncCliCommand {
         let cargo_programs = Command::new("sh")
             .arg("-c")
             .arg("cargo install --list | grep -v ':$' | sed 's/^ *//'")
-            .output()
-            .expect("Unable to run cargo");
+            .output()?;
         let cargo_programs = String::from_utf8_lossy(&cargo_programs.stdout).to_string();
-        write(&cargo_path, cargo_programs).unwrap_or_else(|_| {
-            panic!("Unable to write cargo programs to {}", cargo_path.display())
-        });
+        write(&cargo_path, cargo_programs)?;
         println!("Saved cargo programs to {}", cargo_path.display());
+        Ok(())
     }
 
     /// Sync the nix-env programs
-    /// # Panics
-    /// Panics if the nix command cannot be run
-    fn sync_programs_nix(config: &mut Config) {
+    /// # Errors
+    /// Returns an error if the command fails
+    fn sync_programs_nix(config: &mut Config) -> Result<(), GeneralError> {
         let nix_path = config_sub_path!(
             config,
             sync,
@@ -208,18 +212,17 @@ impl SyncCliCommand {
         let nix_programs = Command::new("sh")
             .arg("-c")
             .arg("nix-env --query | cut -d'-' -f 1")
-            .output()
-            .expect("Unable to run nix");
+            .output()?;
         let nix_programs = String::from_utf8_lossy(&nix_programs.stdout).to_string();
-        write(&nix_path, nix_programs)
-            .unwrap_or_else(|_| panic!("Unable to write nix programs to {}", nix_path.display()));
+        write(&nix_path, nix_programs)?;
         println!("Saved nix programs to {}", nix_path.display());
+        Ok(())
     }
 
     /// Sync the vscode extensions
-    /// # Panics
-    /// Panics if the vscode command cannot be run
-    fn sync_programs_vscode(config: &mut Config) {
+    /// # Errors
+    /// Returns an error if the command fails
+    fn sync_programs_vscode(config: &mut Config) -> Result<(), GeneralError> {
         let vscode_path = config_sub_path!(
             config,
             sync,
@@ -232,34 +235,38 @@ impl SyncCliCommand {
         let vscode_extensions = Command::new("sh")
             .arg("-c")
             .arg("code --list-extensions")
-            .output()
-            .expect("Unable to run vscode");
+            .output()?;
         let vscode_extensions = String::from_utf8_lossy(&vscode_extensions.stdout).to_string();
-        write(&vscode_path, vscode_extensions).unwrap_or_else(|_| {
-            panic!(
-                "Unable to write vscode extensions to {}",
-                vscode_path.display()
-            )
-        });
+        write(&vscode_path, vscode_extensions)?;
         println!("Saved vscode extensions to {}", vscode_path.display());
+        Ok(())
     }
 
     /// Sync the programs
-    fn sync_programs(config: &mut Config) {
+    /// # Errors
+    /// Returns an error if any of the subcommands fails
+    fn sync_programs(config: &mut Config) -> Result<(), GeneralError> {
         println!("Syncing programs");
-        SyncCliCommand::sync_programs_cargo(config);
-        SyncCliCommand::sync_programs_nix(config);
-        SyncCliCommand::sync_programs_vscode(config);
+        SyncCliCommand::sync_programs_cargo(config)?;
+        SyncCliCommand::sync_programs_nix(config)?;
+        SyncCliCommand::sync_programs_vscode(config)?;
+        Ok(())
     }
 
     /// Sync all
-    fn sync_all(config: &mut Config, _matches: &ArgMatches) {
-        Movies::sync_movies(config, None);
+    /// # Errors
+    /// Returns an error if any of the subcommands fails
+    fn sync_all(config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
+        if config.debug > 1 {
+            println!("Syncing all");
+        }
+        Movies::sync_movies(config, None)?;
         println!();
-        SyncCliCommand::save_files(config);
+        SyncCliCommand::save_files(config)?;
         println!();
-        SyncCliCommand::sync_programs(config);
+        SyncCliCommand::sync_programs(config)?;
         println!();
-        Gh::sync_github(config, None);
+        Gh::sync_github(config, None)?;
+        Ok(())
     }
 }

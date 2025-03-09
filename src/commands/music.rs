@@ -15,6 +15,7 @@ use crate::{
     cli::{input_path, CliCommand},
     config::Config,
     config_path,
+    errors::GeneralError,
 };
 
 /// Movies configuration
@@ -43,53 +44,53 @@ impl CliCommand for MusicCliCommand {
             )
             .arg_required_else_help(true)
     }
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) {
+    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
         if let Some(matches) = args_matches.subcommand_matches("sync") {
-            MusicCliCommand::sync_music(config, matches);
+            MusicCliCommand::sync_music(config, matches)?;
         } else if let Some(matches) = args_matches.subcommand_matches("open") {
-            MusicCliCommand::open_music_file(config, matches);
+            MusicCliCommand::open_music_file(config, matches)?;
         }
+        Ok(())
     }
 }
 
 impl MusicCliCommand {
     /// Get the music file path
-    pub fn get_music_file_path(config: &mut Config) -> PathBuf {
-        config_path!(
+    /// # Errors
+    /// Fails if the file cannot be found
+    pub fn get_music_file_path(config: &mut Config) -> Result<PathBuf, GeneralError> {
+        let path = config_path!(
             config,
             music,
             MusicCliCommand,
             music_file,
             "the file for music"
-        )
+        );
+        Ok(path)
     }
 
     /// open music file
-    /// # Panics
-    /// Panics if editor fails
-    pub fn open_music_file(config: &mut Config, matches: &ArgMatches) {
-        let music_file = MusicCliCommand::get_music_file_path(config);
+    /// # Errors
+    /// Fails if the file cannot be opened
+    pub fn open_music_file(config: &mut Config, matches: &ArgMatches) -> Result<(), GeneralError> {
+        let music_file = MusicCliCommand::get_music_file_path(config)?;
         let only_path = matches.get_flag("path");
         if only_path {
             println!("{}", music_file.display());
-            return;
+            return Ok(());
         }
         println!("Opening music file at {}", music_file.display());
-        Command::new("vi")
-            .arg(&music_file)
-            .spawn()
-            .expect("Unable to open config with default editor")
-            .wait()
-            .expect("Error: Editor returned a non-zero status");
+        Command::new("vi").arg(&music_file).spawn()?.wait()?;
+        Ok(())
     }
 
     /// Sync music
-    /// # Panics
-    /// Panics if tokio runtime fails
-    pub fn sync_music(config: &mut Config, _matches: &ArgMatches) {
-        let rt = Runtime::new().expect("Failed to create tokio runtime");
+    /// # Errors
+    /// Fails if the music file cannot be found
+    pub fn sync_music(config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
+        let rt = Runtime::new()?;
 
-        let music_file = MusicCliCommand::get_music_file_path(config);
+        let music_file = MusicCliCommand::get_music_file_path(config)?;
         let env_path = config_path!(config, music, MusicCliCommand, env_path, "the env path");
 
         println!("music file: '{}'", music_file.display());
@@ -107,5 +108,6 @@ impl MusicCliCommand {
                 .init();
             music_exporter::cli_main(music_file, Some(env_path), &platforms).await
         });
+        Ok(())
     }
 }

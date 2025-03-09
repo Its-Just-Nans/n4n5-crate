@@ -1,6 +1,9 @@
 //! Configuration module
 
-use crate::commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand};
+use crate::{
+    commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand},
+    errors::GeneralError,
+};
 use home::home_dir;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -70,22 +73,21 @@ impl Config {
     }
 
     /// Save the config data to the config file
-    /// # Panics
-    /// Panics if the file can't be created or written to
-    pub fn save(&self) {
-        let config_str = toml::to_string(&self.config_data).expect("Unable to serialize config");
-        let mut file = File::create(&self.config_path).expect("Unable to create config file");
-        file.write_all(config_str.as_bytes())
-            .expect("Unable to write to config file");
+    /// # Errors
+    /// Returns an error if the file can't be written to
+    pub fn save(&self) -> Result<(), GeneralError> {
+        let config_str = toml::to_string(&self.config_data)?;
+        let mut file = File::create(&self.config_path)?;
+        file.write_all(config_str.as_bytes())?;
+        Ok(())
     }
 
     /// Create a new Config object from a custom path
-    /// # Panics
-    /// Panics if the file can't be opened
-    pub fn new_from_path(custom_path: &PathBuf) -> Self {
-        let contents = read_to_string(custom_path.clone())
-            .unwrap_or_else(|_| panic!("Unable to open {:?}", custom_path));
-        Config::parse_config(&contents, custom_path.clone())
+    /// # Errors
+    /// Returns an error if the file can't be opened
+    pub fn new_from_path(custom_path: PathBuf) -> Result<Self, GeneralError> {
+        let contents = read_to_string(custom_path.clone())?;
+        Ok(Config::parse_config(&contents, custom_path))
     }
 
     /// Set the debug value
@@ -113,8 +115,14 @@ impl Config {
     }
 
     /// Update the config data and save it to the config file
-    pub fn update(&mut self, updater_fn: impl FnOnce(&mut ConfigData) -> &mut ConfigData) {
+    /// # Errors
+    /// Returns an error if the file can't be written to
+    pub fn update(
+        &mut self,
+        updater_fn: impl FnOnce(&mut ConfigData) -> &mut ConfigData,
+    ) -> Result<(), GeneralError> {
         updater_fn(&mut self.config_data);
-        self.save();
+        self.save()?;
+        Ok(())
     }
 }

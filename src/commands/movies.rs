@@ -12,6 +12,7 @@ use crate::{
     cli::{get_input, input_path, CliCommand},
     config::Config,
     config_path,
+    errors::GeneralError,
 };
 
 /// Movies configuration
@@ -167,35 +168,39 @@ impl CliCommand for Movies {
             .arg_required_else_help(true)
     }
 
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) {
+    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
         if let Some(matches) = args_matches.subcommand_matches("show") {
-            Movies::print_sorted_movies(config, matches);
+            Movies::print_sorted_movies(config, matches)?;
         } else if let Some(matches) = args_matches.subcommand_matches("stats") {
-            Movies::print_stats(config, matches);
+            Movies::print_stats(config, matches)?;
         } else if let Some(matches) = args_matches.subcommand_matches("sync") {
-            Movies::sync_movies(config, Some(matches));
+            Movies::sync_movies(config, Some(matches))?;
         } else if let Some(matches) = args_matches.subcommand_matches("open") {
-            Movies::open_movies(config, matches);
+            Movies::open_movies(config, matches)?;
         } else if let Some(matches) = args_matches.subcommand_matches("add") {
-            Movies::add_movie(config, matches);
+            Movies::add_movie(config, matches)?;
         }
+        Ok(())
     }
 }
 
 impl Movies {
     /// Get the movie path
-    pub fn get_movie_path(config: &mut Config) -> PathBuf {
-        config_path!(config, movies, Movies, file_path, "movies file")
+    /// # Errors
+    /// Returns an error if unable to read the movies file
+    pub fn get_movie_path(config: &mut Config) -> Result<PathBuf, GeneralError> {
+        let path = config_path!(config, movies, Movies, file_path, "movies file");
+        Ok(path)
     }
 
     /// Add a movie
-    /// # Panics
-    /// Panics if unable to write the movies file
-    fn add_movie(config: &mut Config, _matches: &ArgMatches) {
-        let file_path = Movies::get_movie_path(config);
+    /// # Errors
+    /// Returns an error if unable to read the movies file
+    fn add_movie(config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
+        let file_path = Movies::get_movie_path(config)?;
         let title = get_input("Title");
-        let note = get_input("Note").parse().expect("Unable to parse note");
-        let date = get_input("Date").parse().expect("Unable to parse note");
+        let note = get_input("Note").parse()?;
+        let date = get_input("Date").parse()?;
         let comment = get_input("Comment");
         let seen = get_input("Seen");
         let summary = get_input("Summary");
@@ -207,61 +212,65 @@ impl Movies {
             seen: Some(seen),
             summary: Some(summary),
         };
-        let mut all_movies = Movies::get_all_movies(config);
+        let mut all_movies = Movies::get_all_movies(config)?;
         all_movies.movies.push(movie);
-        let movies_file_to_str = serde_json::to_string_pretty(&all_movies.movies)
-            .expect("Unable to serialize movies file");
-        std::fs::write(&file_path, movies_file_to_str).expect("Unable to write movies file");
+        let movies_file_to_str = serde_json::to_string_pretty(&all_movies.movies)?;
+        std::fs::write(&file_path, movies_file_to_str)?;
         println!("Movie added to '{}'", file_path.display());
+        Ok(())
     }
 
     /// Open movie file
-    /// # Panics
-    /// Panics if editor fails
-    pub fn open_movies(config: &mut Config, matches: &ArgMatches) {
-        let file_path = Movies::get_movie_path(config);
+    /// # Errors
+    /// Returns an error if unable to open the movies file
+    pub fn open_movies(config: &mut Config, matches: &ArgMatches) -> Result<(), GeneralError> {
+        let file_path = Movies::get_movie_path(config)?;
         let only_path = matches.get_flag("path");
         if only_path {
             println!("{}", file_path.display());
-            return;
+            return Ok(());
         }
         println!("Opening movies file at {}", file_path.display());
-        Command::new("vi")
-            .arg(&file_path)
-            .spawn()
-            .expect("Unable to open config with default editor")
-            .wait()
-            .expect("Error: Editor returned a non-zero status");
+        Command::new("vi").arg(&file_path).spawn()?.wait()?;
+        Ok(())
     }
 
     /// Get all movies
-    /// # Panics
-    /// Panics if unable to read the movies file
-    pub fn get_all_movies(config: &mut Config) -> AllMovies {
-        let file_path = Movies::get_movie_path(config);
+    /// # Errors
+    /// Returns an error if unable to read the movies file
+    pub fn get_all_movies(config: &mut Config) -> Result<AllMovies, GeneralError> {
+        let file_path = Movies::get_movie_path(config)?;
         if config.debug > 0 {
             println!("Reading movies file at {}", file_path.display());
         }
-        let movies_file_to_str = read_to_string(&file_path)
-            .unwrap_or_else(|_| panic!("Unable to read movies file at {}", file_path.display()));
-        let all_movies: Vec<OneMovie> =
-            serde_json::from_str(&movies_file_to_str).expect("Unable to parse movies file");
-        AllMovies { movies: all_movies }
+        if !file_path.exists() {
+            return Err(GeneralError::new(format!(
+                "Movies file not found at '{}'",
+                file_path.display()
+            )));
+        }
+        let movies_file_to_str = read_to_string(&file_path)?;
+        let all_movies: Vec<OneMovie> = serde_json::from_str(&movies_file_to_str)?;
+        Ok(AllMovies { movies: all_movies })
     }
 
     /// Print the movies sorted by note
-    /// # Panics
-    /// Panics if unable to read the movies file
-    fn print_sorted_movies(config: &mut Config, matches: &ArgMatches) {
-        let mut all_movies = Movies::get_all_movies(config);
+    /// # Errors
+    /// Returns an error if unable to read the movies file
+    fn print_sorted_movies(config: &mut Config, matches: &ArgMatches) -> Result<(), GeneralError> {
+        let mut all_movies = Movies::get_all_movies(config)?;
         let reverse = matches.get_flag("reverse");
         let show_comment = matches.get_flag("comment");
         let show_full = matches.get_flag("full");
         all_movies.movies.sort_by(|a, b| {
             if reverse {
-                b.note.partial_cmp(&a.note).unwrap()
+                b.note
+                    .partial_cmp(&a.note)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             } else {
-                a.note.partial_cmp(&b.note).unwrap()
+                a.note
+                    .partial_cmp(&b.note)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             }
         });
         if show_full {
@@ -271,6 +280,7 @@ impl Movies {
         } else {
             all_movies.display(DisplayMode::Short);
         }
+        Ok(())
     }
 
     /// Group movies by date
@@ -303,8 +313,10 @@ impl Movies {
     }
 
     /// Print the stats of the movies
-    fn print_stats(config: &mut Config, matches: &ArgMatches) {
-        let movies = Movies::get_all_movies(config);
+    /// # Errors
+    /// Returns an error if unable to read the movies file
+    fn print_stats(config: &mut Config, matches: &ArgMatches) -> Result<(), GeneralError> {
+        let movies = Movies::get_all_movies(config)?;
         let (min_date, max_date, avg_note, median_note) = Movies::get_stats(&movies);
         let is_json = matches.get_flag("json");
         if is_json {
@@ -323,13 +335,20 @@ impl Movies {
             println!("Average note: {:.3}", avg_note);
             println!("Median note: {:.3}", median_note);
         }
+        Ok(())
     }
 
     /// Sync the public movie file
-    /// # Panics
-    /// Panics if unable to write the movies file
-    pub fn sync_movies(config: &mut Config, opt_matches: Option<&ArgMatches>) {
-        let movies = Movies::get_all_movies(config);
+    /// # Errors
+    /// Returns an error if unable to read the movies file
+    pub fn sync_movies(
+        config: &mut Config,
+        opt_matches: Option<&ArgMatches>,
+    ) -> Result<(), GeneralError> {
+        if config.debug > 1 {
+            println!("Syncing movies");
+        }
+        let movies = Movies::get_all_movies(config)?;
         let public_movies_path = config_path!(
             config,
             movies,
@@ -353,17 +372,14 @@ impl Movies {
         let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
         let mut buf = Vec::new();
         let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
-        movie_by_date_count
-            .serialize(&mut ser)
-            .expect("Unable to serialize movies");
+        movie_by_date_count.serialize(&mut ser)?;
         if is_json {
-            println!(
-                "{}",
-                String::from_utf8(buf).expect("Unable to convert to string")
-            );
+            let movies_str = String::from_utf8(buf)?;
+            println!("{}", movies_str);
         } else {
-            std::fs::write(&public_movies_path, buf).expect("Unable to write movies file");
+            std::fs::write(&public_movies_path, buf)?;
             println!("Movies file saved to '{}'", public_movies_path.display());
         }
+        Ok(())
     }
 }

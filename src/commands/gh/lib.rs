@@ -13,6 +13,7 @@ use crate::{
     commands::gh::types::GhProject,
     config::Config,
     config_path,
+    errors::GeneralError,
 };
 
 use super::types::{GhPageInfo, GhResponse};
@@ -55,12 +56,13 @@ impl CliCommand for Gh {
             .arg_required_else_help(true)
     }
 
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) {
+    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
         if let Some(matches) = args_matches.subcommand_matches("pulls") {
-            Gh::save_pulls(config, Some(matches));
+            return Gh::save_pulls(config, Some(matches));
         } else if let Some(matches) = args_matches.subcommand_matches("projects") {
-            Gh::save_projects(config, Some(matches));
+            return Gh::save_projects(config, Some(matches));
         }
+        Ok(())
     }
 }
 
@@ -74,16 +76,22 @@ enum ProjectType {
 
 impl Gh {
     /// Sync the github data
-    pub fn sync_github(config: &mut Config, matches: Option<&ArgMatches>) {
+    /// # Errors
+    /// Fails if unable to save the pulls or projects
+    pub fn sync_github(
+        config: &mut Config,
+        matches: Option<&ArgMatches>,
+    ) -> Result<(), GeneralError> {
         println!("Syncing github data");
-        Gh::save_pulls(config, matches);
-        Gh::save_projects(config, matches);
+        Gh::save_pulls(config, matches)?;
+        Gh::save_projects(config, matches)?;
+        Ok(())
     }
 
     /// Save the pulls to the specified file
-    /// # Panics
-    /// Panics if unable to write to file
-    fn save_pulls(config: &mut Config, _matches: Option<&ArgMatches>) {
+    /// # Errors
+    /// Fails if unable to write to file
+    fn save_pulls(config: &mut Config, _matches: Option<&ArgMatches>) -> Result<(), GeneralError> {
         let pulls_path = config_path!(config, gh, Gh, file_pulls, "pulls file");
         println!("Saving pulls to {}", pulls_path.display());
         let mut response_data = GhPageInfo {
@@ -138,18 +146,13 @@ impl Gh {
                 println!("Running command:");
                 println!("{}", command);
             }
-            let output = Command::new("sh")
-                .arg("-c")
-                .arg(command)
-                .output()
-                .expect("failed to execute process");
+            let output = Command::new("sh").arg("-c").arg(command).output()?;
             let output = String::from_utf8_lossy(&output.stdout).to_string();
             if config.debug > 1 {
                 println!("Output:");
                 println!("{}", output);
             }
-            let output = serde_json::from_str::<GhResponse>(&output)
-                .expect("Unable to parse json from gh command");
+            let output = serde_json::from_str::<GhResponse>(&output)?;
             println!(
                 "Received {} pulls requests",
                 output.data.user.pull_requests.edges.len()
@@ -160,19 +163,23 @@ impl Gh {
         let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
         let mut buf = Vec::new();
         let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
-        all_pulls.serialize(&mut ser).unwrap();
-        write(&pulls_path, buf).expect("Unable to write to file");
+        all_pulls.serialize(&mut ser)?;
+        write(&pulls_path, buf)?;
         println!(
             "Saving {} pulls to {}",
             all_pulls.len(),
             pulls_path.display()
         );
+        Ok(())
     }
 
     /// Fetch projects with gh cli
-    /// # Panics
-    /// Panics if unable to parse json from gh command
-    fn fetch_projects(project_type: ProjectType, debug: u8) -> Vec<GhProject> {
+    /// # Errors
+    /// Fails if unable to fetch the projects
+    fn fetch_projects(
+        project_type: ProjectType,
+        debug: u8,
+    ) -> Result<Vec<GhProject>, GeneralError> {
         let mut response_data = GhPageInfo {
             has_next_page: true,
             ..Default::default()
@@ -228,39 +235,36 @@ impl Gh {
                 println!("Running command:");
                 println!("{}", command);
             }
-            let output = Command::new("sh")
-                .arg("-c")
-                .arg(command)
-                .output()
-                .expect("failed to execute process");
+            let output = Command::new("sh").arg("-c").arg(command).output()?;
             let output = String::from_utf8_lossy(&output.stdout).to_string();
             if debug > 2 {
                 println!("Output:");
                 println!("{}", output);
             }
-            let output = serde_json::from_str::<Value>(&output)
-                .expect("Unable to parse json from gh command");
+            let output = serde_json::from_str::<Value>(&output)?;
             match output {
                 Value::Object(map) => {
                     if let Some(Value::Object(data)) = map.get("data") {
                         if let Some(Value::Object(user)) = data.get("user") {
                             if let Some(Value::Object(projects)) = user.get(fetch_type) {
                                 if let Some(nodes) = projects.get("nodes") {
-                                    let nodes: Vec<GhProject> = serde_json::from_value(
-                                        nodes.clone(),
-                                    )
-                                    .unwrap_or_else(|err| {
-                                        panic!("Unable to parse nodes: {}\n{}", err, nodes)
-                                    });
+                                    let nodes: Vec<GhProject> =
+                                        serde_json::from_value(nodes.clone())?;
                                     if debug > 0 {
                                         println!("Received {} {}", nodes.len(), fetch_type);
                                     }
                                     all_projects.extend(nodes);
                                 }
                                 response_data = serde_json::from_value(
-                                    projects.get("pageInfo").unwrap().clone(),
-                                )
-                                .unwrap();
+                                    projects
+                                        .get("pageInfo")
+                                        .ok_or_else(|| {
+                                            GeneralError::new(
+                                                "Unable to find pageInfo in gh command".to_owned(),
+                                            )
+                                        })?
+                                        .clone(),
+                                )?;
                             }
                         }
                     }
@@ -270,13 +274,16 @@ impl Gh {
                 }
             }
         }
-        all_projects
+        Ok(all_projects)
     }
 
     /// Save the projects to the specified file
-    /// # Panics
-    /// Panics if unable to write to file
-    fn save_projects(config: &mut Config, matches: Option<&ArgMatches>) {
+    /// # Errors
+    /// Fails if unable to write to file
+    fn save_projects(
+        config: &mut Config,
+        matches: Option<&ArgMatches>,
+    ) -> Result<(), GeneralError> {
         let is_json = match matches {
             Some(matches) => matches.get_flag("json"),
             None => false,
@@ -289,9 +296,9 @@ impl Gh {
             true => 0,
             false => config.debug + 1,
         };
-        let mut repos = Gh::fetch_projects(ProjectType::Repos, debug_level);
+        let mut repos = Gh::fetch_projects(ProjectType::Repos, debug_level)?;
         repos.sort_by(|a, b| a.name.cmp(&b.name));
-        let mut gists = Gh::fetch_projects(ProjectType::Gists, debug_level);
+        let mut gists = Gh::fetch_projects(ProjectType::Gists, debug_level)?;
         gists.sort_by(|a, b| a.name.cmp(&b.name));
         if !is_json {
             println!(
@@ -305,10 +312,11 @@ impl Gh {
         let mut buf = Vec::new();
         let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
         repos.append(&mut gists);
-        repos.serialize(&mut ser).unwrap();
+        repos.serialize(&mut ser)?;
         if is_json {
             println!("{}", String::from_utf8_lossy(&buf));
         }
-        write(&projects_path, buf).expect("Unable to write to file");
+        write(&projects_path, buf)?;
+        Ok(())
     }
 }

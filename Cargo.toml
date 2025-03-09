@@ -1,15 +1,14 @@
 [package]
-keywords = ["utility"]
-categories = ["command-line-utilities"]
 name = "n4n5"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 description = "n4n5's utility crate"
 documentation = "https://docs.rs/n4n5"
 license = "MIT"
 readme = "./README.md"
 repository = "https://github.com/Its-Just-Nans/n4n5-crate"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+keywords = ["utility"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 clap = { version = "4.5.26", features = ["cargo"] }
