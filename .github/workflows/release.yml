@@ -86,15 +86,15 @@ jobs:
                     - { target: aarch64-unknown-linux-musl, os: ubuntu-22.04, use-cross: true }
                     - { target: arm-unknown-linux-gnueabihf, os: ubuntu-22.04, use-cross: true }
                     - { target: arm-unknown-linux-musleabihf, os: ubuntu-22.04, use-cross: true }
-                    - { target: i686-pc-windows-msvc, os: windows-2022 }
                     - { target: i686-unknown-linux-gnu, os: ubuntu-22.04, use-cross: true }
                     - { target: i686-unknown-linux-musl, os: ubuntu-22.04, use-cross: true }
-                    - { target: x86_64-apple-darwin, os: macos-13 }
-                    - { target: aarch64-apple-darwin, os: macos-14 }
-                    - { target: x86_64-pc-windows-gnu, os: windows-2022 }
-                    - { target: x86_64-pc-windows-msvc, os: windows-2022 }
                     - { target: x86_64-unknown-linux-gnu, os: ubuntu-22.04, use-cross: true }
                     - { target: x86_64-unknown-linux-musl, os: ubuntu-22.04, use-cross: true }
+                    - { target: x86_64-apple-darwin, os: macos-13 }
+                    - { target: aarch64-apple-darwin, os: macos-14 }
+                    #- { target: i686-pc-windows-msvc, os: windows-2022 }
+                    #- { target: x86_64-pc-windows-gnu, os: windows-2022 }
+                    #- { target: x86_64-pc-windows-msvc, os: windows-2022 }
         env:
             BUILD_CMD: cargo
         steps:
@@ -198,7 +198,7 @@ jobs:
                   cp "README.md" "LICENSE" "CHANGELOG.md" "$ARCHIVE_DIR"
 
                   # Man page
-                  cp 'doc/${{ needs.crate_metadata.outputs.name }}.1' "$ARCHIVE_DIR"
+                  #cp 'doc/${{ needs.crate_metadata.outputs.name }}.1' "$ARCHIVE_DIR"
 
                   # Autocompletion files
                   #cp -r autocomplete "${ARCHIVE_DIR}"
