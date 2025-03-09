@@ -12,6 +12,9 @@ on:
         tags:
             - "*"
 
+permissions:
+    contents: write
+
 jobs:
     crate_metadata:
         name: Extract crate metadata
