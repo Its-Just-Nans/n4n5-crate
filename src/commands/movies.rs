@@ -249,6 +249,12 @@ impl Movies {
                 file_path.display()
             )));
         }
+        if !file_path.is_file() {
+            return Err(GeneralError::new(format!(
+                "Movies file is not a file at '{}'",
+                file_path.display()
+            )));
+        }
         let movies_file_to_str = read_to_string(&file_path)?;
         let all_movies: Vec<OneMovie> = serde_json::from_str(&movies_file_to_str)?;
         Ok(AllMovies { movies: all_movies })

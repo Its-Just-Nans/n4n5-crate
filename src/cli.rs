@@ -95,24 +95,40 @@ pub fn input() -> String {
     s
 }
 
+/// Get a yes input from the user
+pub fn input_yes() -> bool {
+    let s = input();
+    matches!(s.to_lowercase().as_str(), "y" | "yes")
+}
+
+/// Get a no input from the user
+pub fn input_no() -> bool {
+    !input_yes()
+}
+
 /// Get a valid path from the user
 /// # Panics
 /// Panics if the path is not valid
-pub fn input_path() -> (PathBuf, String) {
-    let s = input();
-    let mut path = PathBuf::from(s);
+/// # Errors
+/// Returns a GeneralError if the path does not exist
+pub fn input_path() -> Result<(PathBuf, String), GeneralError> {
+    let mut s = input();
+    let mut path = PathBuf::from(&s);
     loop {
+        if s == "\\" {
+            return Err(GeneralError::new("no path".to_string()));
+        }
         if path.exists() {
             break;
         }
         println!("Path does not exist. Please enter a valid path:");
-        let s = input();
-        path = PathBuf::from(s);
+        s = input();
+        path = PathBuf::from(&s);
     }
-    (
+    Ok((
         path.clone(),
         path.to_str()
             .expect("Cannot convert path to string")
             .to_string(),
-    )
+    ))
 }

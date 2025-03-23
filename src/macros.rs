@@ -14,7 +14,7 @@ macro_rules! config_path {
                     $string,
                     ":"
                 ));
-                let file_path = input_path();
+                let file_path = input_path()?;
                 let cloned_path = file_path.1.clone();
                 $config.update(|config_data| {
                     if let Some(local_config) = config_data.$setting_name.as_mut() {
@@ -36,7 +36,7 @@ pub(crate) use config_path;
 
 /// automatically generate the input path
 macro_rules! config_sub_path {
-    ($config:ident, $setting_name: ident, $struct_name: ident, $key_name: ident, $sub_struct_name: ident, $sub_key_name: ident, $string: expr) => {
+    ($config:ident, $setting_name: ident, $struct_name: ident, $key_name: ident, $sub_struct_name: ident, $sub_key_name: ident, $string: expr) => {{
         match &$config.config_data.$setting_name {
             Some($struct_name {
                 $key_name:
@@ -52,7 +52,7 @@ macro_rules! config_sub_path {
                     $string,
                     ":"
                 ));
-                let file_path = input_path();
+                let file_path = input_path()?;
                 let cloned_path = file_path.1.clone();
                 $config.update(|config_data| {
                     match config_data.$setting_name {
@@ -77,6 +77,6 @@ macro_rules! config_sub_path {
                 file_path.0
             }
         }
-    };
+    }};
 }
 pub(crate) use config_sub_path;

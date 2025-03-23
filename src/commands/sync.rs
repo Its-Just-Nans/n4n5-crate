@@ -14,7 +14,7 @@ use clap::{arg, ArgMatches, Command as ClapCommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli::{input_path, CliCommand},
+    cli::{input_no, input_path, CliCommand},
     commands::gh::lib::Gh,
     config::Config,
     config_path, config_sub_path,
@@ -157,7 +157,7 @@ impl SyncCliCommand {
     /// Returns an error if the file path is invalid
     fn add_file(config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
         println!("Please enter the path to the file to add:");
-        let file_path = input_path();
+        let file_path = input_path()?;
         let cloned_path = file_path.1.clone();
         config.update(|config_data| {
             if let Some(local_config) = config_data.sync.as_mut() {
@@ -177,6 +177,16 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_cargo(config: &mut Config) -> Result<(), GeneralError> {
+        if let Some(sync) = &config.config_data.sync {
+            if let Some(programs) = &sync.programs {
+                if programs.path_cargo_programs.is_none() {
+                    println!("No cargo programs path found, do you want to add one? (y/n)");
+                    if input_no() {
+                        return Ok(());
+                    }
+                }
+            }
+        }
         let cargo_path = config_sub_path!(
             config,
             sync,
@@ -200,6 +210,16 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_nix(config: &mut Config) -> Result<(), GeneralError> {
+        if let Some(sync) = &config.config_data.sync {
+            if let Some(programs) = &sync.programs {
+                if programs.path_nix.is_none() {
+                    println!("No nix programs path found, do you want to add one? (y/n)");
+                    if input_no() {
+                        return Ok(());
+                    }
+                }
+            }
+        }
         let nix_path = config_sub_path!(
             config,
             sync,
@@ -223,6 +243,16 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_vscode(config: &mut Config) -> Result<(), GeneralError> {
+        if let Some(sync) = &config.config_data.sync {
+            if let Some(programs) = &sync.programs {
+                if programs.path_vscode_extensions.is_none() {
+                    println!("No vscode extensions path found, do you want to add one? (y/n)");
+                    if input_no() {
+                        return Ok(());
+                    }
+                }
+            }
+        }
         let vscode_path = config_sub_path!(
             config,
             sync,
@@ -260,13 +290,21 @@ impl SyncCliCommand {
         if config.debug > 1 {
             println!("Syncing all");
         }
-        Movies::sync_movies(config, None)?;
-        println!();
-        SyncCliCommand::save_files(config)?;
-        println!();
-        SyncCliCommand::sync_programs(config)?;
-        println!();
-        Gh::sync_github(config, None)?;
+        if config.config_data.movies.is_some() {
+            Movies::sync_movies(config, None)?;
+            println!();
+        }
+        if config.config_data.sync.is_some() {
+            SyncCliCommand::save_files(config)?;
+            println!();
+        }
+        if config.config_data.sync.is_some() {
+            SyncCliCommand::sync_programs(config)?;
+            println!();
+        }
+        if config.config_data.gh.is_some() {
+            Gh::sync_github(config, None)?;
+        }
         Ok(())
     }
 }
