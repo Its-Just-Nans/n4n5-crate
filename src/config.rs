@@ -20,6 +20,9 @@ pub struct Config {
     /// debug level
     pub debug: u8,
 
+    /// whether to use input for configuration
+    pub use_input: bool,
+
     /// path to the configuration file
     pub config_path: PathBuf,
 
@@ -50,6 +53,7 @@ impl Config {
     fn parse_config(str_config: &str, path_config: PathBuf) -> Self {
         Config {
             debug: 0,
+            use_input: true,
             config_path: path_config,
             config_data: match toml::from_str(str_config) {
                 Ok(config) => config,

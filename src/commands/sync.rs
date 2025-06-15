@@ -177,6 +177,9 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_cargo(config: &mut Config) -> Result<(), GeneralError> {
+        if !config.use_input {
+            return Ok(());
+        }
         if let Some(sync) = &config.config_data.sync {
             if let Some(programs) = &sync.programs {
                 if programs.path_cargo_programs.is_none() {
@@ -210,6 +213,9 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_nix(config: &mut Config) -> Result<(), GeneralError> {
+        if !config.use_input {
+            return Ok(());
+        }
         if let Some(sync) = &config.config_data.sync {
             if let Some(programs) = &sync.programs {
                 if programs.path_nix.is_none() {
@@ -243,6 +249,9 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_vscode(config: &mut Config) -> Result<(), GeneralError> {
+        if !config.use_input {
+            return Ok(());
+        }
         if let Some(sync) = &config.config_data.sync {
             if let Some(programs) = &sync.programs {
                 if programs.path_vscode_extensions.is_none() {
@@ -287,6 +296,7 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if any of the subcommands fails
     fn sync_all(config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
+        config.use_input = false;
         if config.debug > 1 {
             println!("Syncing all");
         }
