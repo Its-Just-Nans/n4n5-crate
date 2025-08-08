@@ -141,16 +141,16 @@ impl Gh {
                 }
               }
             }'"
-            .replace("100)", format!("100{})", add).as_str());
+            .replace("100)", format!("100{add})",).as_str());
             if config.debug > 0 {
                 println!("Running command:");
-                println!("{}", command);
+                println!("{command}");
             }
             let output = Command::new("sh").arg("-c").arg(command).output()?;
             let output = String::from_utf8_lossy(&output.stdout).to_string();
             if config.debug > 1 {
                 println!("Output:");
-                println!("{}", output);
+                println!("{output}");
             }
             let output = serde_json::from_str::<GhResponse>(&output)?;
             println!(
@@ -233,13 +233,13 @@ impl Gh {
             .replace("REPO_DATA", repo_data);
             if debug > 1 {
                 println!("Running command:");
-                println!("{}", command);
+                println!("{command}");
             }
             let output = Command::new("sh").arg("-c").arg(command).output()?;
             let output = String::from_utf8_lossy(&output.stdout).to_string();
             if debug > 2 {
                 println!("Output:");
-                println!("{}", output);
+                println!("{output}");
             }
             let output = serde_json::from_str::<Value>(&output)?;
             match output {

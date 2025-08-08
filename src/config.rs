@@ -58,7 +58,7 @@ impl Config {
             config_data: match toml::from_str(str_config) {
                 Ok(config) => config,
                 Err(e) => {
-                    eprintln!("Unable to parse config file: {:?}", e);
+                    eprintln!("Unable to parse config file: {e:?}");
                     eprintln!("Using default config");
                     ConfigData::default()
                 }

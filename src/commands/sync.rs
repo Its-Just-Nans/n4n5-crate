@@ -139,11 +139,12 @@ impl SyncCliCommand {
         );
         for file_path_to_save in files_path {
             let input_path = home_pathbuf.join(&file_path_to_save);
-            let mut file_input = File::open(&input_path)?;
+            let mut file_input =
+                File::open(&input_path).map_err(|e| format!("{e} for {}", input_path.display()))?;
             let save_path = folder_path.join(&file_path_to_save);
             println!("- '{}' to '{}'", input_path.display(), save_path.display());
             if let Some(parent) = save_path.parent() {
-                create_dir_all(parent)?;
+                create_dir_all(parent).map_err(|e| format!("{e} for {}", parent.display()))?;
             }
             let mut file = File::create(&save_path)?;
 

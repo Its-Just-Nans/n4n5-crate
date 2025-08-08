@@ -50,6 +50,12 @@ impl From<std::io::Error> for GeneralError {
     }
 }
 
+impl From<String> for GeneralError {
+    fn from(error: String) -> Self {
+        GeneralError::new_with_source("Error:".to_string(), error.into())
+    }
+}
+
 // serde_json::Error is a type alias for serde_json::error::Error
 impl From<serde_json::Error> for GeneralError {
     fn from(error: serde_json::Error) -> Self {
@@ -59,13 +65,13 @@ impl From<serde_json::Error> for GeneralError {
 
 impl From<ParseIntError> for GeneralError {
     fn from(value: ParseIntError) -> Self {
-        GeneralError::new(format!("ParseIntError: {}", value))
+        GeneralError::new(format!("ParseIntError: {value}"))
     }
 }
 
 impl From<ParseFloatError> for GeneralError {
     fn from(value: ParseFloatError) -> Self {
-        GeneralError::new(format!("ParseFloatError: {}", value))
+        GeneralError::new(format!("ParseFloatError: {value}"))
     }
 }
 

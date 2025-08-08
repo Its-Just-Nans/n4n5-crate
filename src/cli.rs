@@ -72,7 +72,7 @@ pub fn cli_main() -> Result<(), GeneralError> {
 
 /// Get input from the user with a prompt
 pub fn get_input(text: &str) -> String {
-    println!("{}", text);
+    println!("{text}");
     input()
 }
 

@@ -3,7 +3,7 @@ fn main() {
     match n4n5::cli_main() {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("{}", e);
+            eprintln!("{e}");
             std::process::exit(1);
         }
     }

@@ -333,13 +333,13 @@ impl Movies {
                 "avg_note": avg_note,
                 "median_note": median_note,
             });
-            println!("{}", stats);
+            println!("{stats}");
         } else {
             println!("Number of movies: {}", movies.movies.len());
-            println!("Min date: {}", min_date);
-            println!("Max date: {}", max_date);
-            println!("Average note: {:.3}", avg_note);
-            println!("Median note: {:.3}", median_note);
+            println!("Min date: {min_date}");
+            println!("Max date: {max_date}");
+            println!("Average note: {avg_note:.3}");
+            println!("Median note: {median_note:.3}");
         }
         Ok(())
     }
@@ -381,7 +381,7 @@ impl Movies {
         movie_by_date_count.serialize(&mut ser)?;
         if is_json {
             let movies_str = String::from_utf8(buf)?;
-            println!("{}", movies_str);
+            println!("{movies_str}");
         } else {
             std::fs::write(&public_movies_path, buf)?;
             println!("Movies file saved to '{}'", public_movies_path.display());
