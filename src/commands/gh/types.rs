@@ -123,6 +123,13 @@ pub struct GhLanguage {
     color: Option<String>,
 }
 
+/// License
+#[derive(Deserialize, Serialize, Default, Debug)]
+pub struct GhLicenseInfo {
+    /// Name of the language
+    name: String,
+}
+
 /// Github Project Response (gist or repository)
 #[derive(Deserialize, Serialize, Default, Debug)]
 pub struct GhProject {
@@ -142,6 +149,18 @@ pub struct GhProject {
     /// homepageUrl
     #[serde(rename = "homepageUrl")]
     pub homepage_url: Option<String>,
+
+    /// Fork count
+    #[serde(rename = "forkCount")]
+    pub fork_count: Option<u64>,
+
+    /// license Info
+    #[serde(rename = "licenseInfo")]
+    pub license_info: Option<GhLicenseInfo>,
+
+    /// Disk usage
+    #[serde(rename = "diskUsage")]
+    pub disk_usage: Option<u64>,
 
     /// primaryLanguage
     #[serde(rename = "primaryLanguage")]

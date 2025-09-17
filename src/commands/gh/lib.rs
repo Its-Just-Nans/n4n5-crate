@@ -105,11 +105,11 @@ impl Gh {
                 false => format!(", after: \"{}\"", response_data.end_cursor),
             };
             let command = "gh api graphql -F owner='Its-Just-Nans' -f query='
-            query($owner: String!) {
-              user(login: $owner) {
-                pullRequests(first: 100) {
-                    edges {
-                        node {
+    query($owner: String!) {
+        user(login: $owner) {
+            pullRequests(first: 100) {
+                edges {
+                    node {
                         id
                         number
                         title
@@ -130,17 +130,17 @@ impl Gh {
                                 }
                             }
                         }
-                        }
-                    }
-                    pageInfo {
-                        endCursor
-                        startCursor
-                        hasNextPage
-                        hasPreviousPage
                     }
                 }
-              }
-            }'"
+                pageInfo {
+                    endCursor
+                    startCursor
+                    hasNextPage
+                    hasPreviousPage
+                }
+            }
+        }
+    }'"
             .replace("100)", format!("100{add})",).as_str());
             if config.debug > 0 {
                 println!("Running command:");
@@ -196,10 +196,15 @@ impl Gh {
             ProjectType::Gists => "",
             ProjectType::Repos => {
                 "primaryLanguage {
-                                name
-                                color
-                            }
-                            homepageUrl"
+                        name
+                        color
+                    }
+                    homepageUrl
+                    diskUsage
+                    forkCount
+                    licenseInfo {
+                        name
+                    }"
             }
         };
         let mut all_projects = Vec::new();
@@ -209,26 +214,26 @@ impl Gh {
                 false => format!(", after: \"{}\", ", response_data.end_cursor),
             };
             let command = "gh api graphql -F owner='Its-Just-Nans' -f query='
-            query( $owner: String!){
-                user(login: $owner) {
-                    TYPE(first: 100, ADD REPO_ARG, privacy: PUBLIC) {
-                        pageInfo {
-                            hasNextPage
-                            endCursor
-                            startCursor
-                        }
-                        nodes {
-                            url
-                            name
-                            REPO_DATA
-                            description
-                            stargazerCount
-                        }
-                    }
+    query( $owner: String!){
+        user(login: $owner) {
+            TYPE(first: 100,ADD REPO_ARG, privacy: PUBLIC) {
+                pageInfo {
+                    hasNextPage
+                    endCursor
+                    startCursor
                 }
-            }'"
+                nodes {
+                    url
+                    name
+                    REPO_DATA
+                    description
+                    stargazerCount
+                }
+            }
+        }
+    }'"
             .replace("TYPE", fetch_type)
-            .replace("ADD", &add)
+            .replace(",ADD", &add)
             .replace("REPO_ARG", repo_arg)
             .replace("REPO_DATA", repo_data);
             if debug > 1 {
