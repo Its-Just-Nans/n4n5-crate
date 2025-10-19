@@ -5,10 +5,7 @@
 //! ```
 //!
 
-use std::{
-    fs::{File, create_dir_all},
-    path::Path,
-};
+use std::{fs::create_dir_all, path::Path};
 
 use clap::{CommandFactory, Subcommand};
 
@@ -16,7 +13,7 @@ use clap_complete::{
     generate_to,
     shells::{Bash, Elvish, Fish, PowerShell, Zsh},
 };
-use clap_mangen::Man;
+use clap_mangen::generate_to as man_generate_to;
 
 use crate::{cli::CliArgs, config::Config, errors::GeneralError};
 
@@ -63,11 +60,10 @@ impl HelpersSubcommand {
     /// Fails if error
     pub fn gen_man(_config: &mut Config) -> Result<(), GeneralError> {
         let cmd = CliArgs::command();
-        let app_name = env!("CARGO_CRATE_NAME");
-        let filename = format!("{}.1", app_name);
-        let mut file = File::create(filename)?;
+        let outdir = Path::new("man");
+        create_dir_all(outdir)?;
 
-        Man::new(cmd).render(&mut file)?;
+        man_generate_to(cmd, outdir)?;
         Ok(())
     }
 }
