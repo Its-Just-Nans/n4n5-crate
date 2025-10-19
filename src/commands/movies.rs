@@ -5,11 +5,11 @@
 //!
 use std::{collections::BTreeMap, fs::read_to_string, path::PathBuf, process::Command};
 
-use clap::{arg, ArgAction, ArgMatches, Command as ClapCommand};
+use clap::{arg, ArgAction, Subcommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli::{get_input, input_path, CliCommand},
+    cli::{get_input, input_path},
     config::Config,
     config_path,
     errors::GeneralError,
@@ -106,81 +106,59 @@ impl OneMovie {
     }
 }
 
-impl CliCommand for Movies {
-    fn get_subcommand() -> ClapCommand {
-        ClapCommand::new("movies")
-            .about("movies subcommand")
-            .subcommand(ClapCommand::new("add").about("adds a movie"))
-            .subcommand(
-                ClapCommand::new("open").about("open movie file").arg(
-                    arg!(
-                        -p --path "Print the path"
-                    )
-                    .action(ArgAction::SetTrue)
-                    .required(false),
-                ),
-            )
-            .subcommand(
-                ClapCommand::new("stats")
-                    .about("show stats about movies")
-                    .arg(
-                        arg!(
-                            -j --json "print as json"
-                        )
-                        .action(ArgAction::SetTrue)
-                        .required(false),
-                    ),
-            )
-            .subcommand(
-                ClapCommand::new("show")
-                    .about("show movies list")
-                    .arg(
-                        arg!(
-                            -r --reverse "Reverse order"
-                        )
-                        .action(ArgAction::SetTrue)
-                        .required(false),
-                    )
-                    .arg(
-                        arg!(
-                            -f --full "Full display"
-                        )
-                        .action(ArgAction::SetTrue)
-                        .required(false),
-                    )
-                    .arg(
-                        arg!(
-                            -c --comment "Show comment"
-                        )
-                        .action(ArgAction::SetTrue)
-                        .required(false),
-                    ),
-            )
-            .subcommand(
-                ClapCommand::new("sync").about("sync movies file").arg(
-                    arg!(
-                        -j --json  "print as json"
-                    )
-                    .action(ArgAction::SetTrue)
-                    .required(false),
-                ),
-            )
-            .arg_required_else_help(true)
-    }
+/// Movies sub command
+#[derive(Subcommand, Debug)]
+pub enum MoviesSubCommand {
+    /// add a movie
+    Add,
+    /// open movie file
+    Open {
+        /// print path of movies file
+        #[arg(short = 'p', long = "path", action = ArgAction::SetTrue)]
+        show_path: bool,
+    },
+    /// Show stats of movies
+    Stats {
+        /// print stats as json
+        #[arg(short ='j', long = "json", action = ArgAction::SetTrue)]
+        print_json: bool,
+    },
+    /// Show movies list
+    Show {
+        /// reverse mode
+        #[arg(short = 'r', long = "reverse", action = ArgAction::SetTrue)]
+        reverse: bool,
+        /// show full mode
+        #[arg(short = 'f', long = "full", action = ArgAction::SetTrue)]
+        show_full: bool,
+        /// show comment
+        #[arg(short = 'c', long = "comment", action = ArgAction::SetTrue)]
+        show_comment: bool,
+    },
+    /// Sync movies file
+    Sync {
+        /// print as json
+        #[arg(short ='j', long = "json", action = ArgAction::SetTrue)]
+        print_json: bool,
+    },
+}
 
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
-        if let Some(matches) = args_matches.subcommand_matches("show") {
-            Movies::print_sorted_movies(config, matches)?;
-        } else if let Some(matches) = args_matches.subcommand_matches("stats") {
-            Movies::print_stats(config, matches)?;
-        } else if let Some(matches) = args_matches.subcommand_matches("sync") {
-            Movies::sync_movies(config, Some(matches))?;
-        } else if let Some(matches) = args_matches.subcommand_matches("open") {
-            Movies::open_movies(config, matches)?;
-        } else if let Some(matches) = args_matches.subcommand_matches("add") {
-            Movies::add_movie(config, matches)?;
+impl MoviesSubCommand {
+    /// invoke subcommand
+    /// # Errors
+    /// Error if error in subcommand
+    pub fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
+        match self {
+            Self::Add => Movies::add_movie(config),
+            Self::Open { show_path } => Movies::open_movies(config, show_path),
+            Self::Show {
+                reverse,
+                show_full,
+                show_comment,
+            } => Movies::print_sorted_movies(config, reverse, show_comment, show_full),
+            Self::Stats { print_json } => Movies::print_stats(config, print_json),
+            Self::Sync { print_json } => Movies::sync_movies(config, print_json),
         }
-        Ok(())
     }
 }
 
@@ -196,7 +174,7 @@ impl Movies {
     /// Add a movie
     /// # Errors
     /// Returns an error if unable to read the movies file
-    fn add_movie(config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
+    fn add_movie(config: &mut Config) -> Result<(), GeneralError> {
         let file_path = Movies::get_movie_path(config)?;
         let title = get_input("Title");
         let note = get_input("Note").parse()?;
@@ -223,10 +201,9 @@ impl Movies {
     /// Open movie file
     /// # Errors
     /// Returns an error if unable to open the movies file
-    pub fn open_movies(config: &mut Config, matches: &ArgMatches) -> Result<(), GeneralError> {
+    pub fn open_movies(config: &mut Config, show_path: bool) -> Result<(), GeneralError> {
         let file_path = Movies::get_movie_path(config)?;
-        let only_path = matches.get_flag("path");
-        if only_path {
+        if show_path {
             println!("{}", file_path.display());
             return Ok(());
         }
@@ -263,11 +240,13 @@ impl Movies {
     /// Print the movies sorted by note
     /// # Errors
     /// Returns an error if unable to read the movies file
-    fn print_sorted_movies(config: &mut Config, matches: &ArgMatches) -> Result<(), GeneralError> {
+    fn print_sorted_movies(
+        config: &mut Config,
+        reverse: bool,
+        show_comment: bool,
+        show_full: bool,
+    ) -> Result<(), GeneralError> {
         let mut all_movies = Movies::get_all_movies(config)?;
-        let reverse = matches.get_flag("reverse");
-        let show_comment = matches.get_flag("comment");
-        let show_full = matches.get_flag("full");
         all_movies.movies.sort_by(|a, b| {
             if reverse {
                 b.note
@@ -321,10 +300,9 @@ impl Movies {
     /// Print the stats of the movies
     /// # Errors
     /// Returns an error if unable to read the movies file
-    fn print_stats(config: &mut Config, matches: &ArgMatches) -> Result<(), GeneralError> {
+    fn print_stats(config: &mut Config, is_json: bool) -> Result<(), GeneralError> {
         let movies = Movies::get_all_movies(config)?;
         let (min_date, max_date, avg_note, median_note) = Movies::get_stats(&movies);
-        let is_json = matches.get_flag("json");
         if is_json {
             let stats = serde_json::json!({
                 "movies": movies.movies.len(),
@@ -347,10 +325,7 @@ impl Movies {
     /// Sync the public movie file
     /// # Errors
     /// Returns an error if unable to read the movies file
-    pub fn sync_movies(
-        config: &mut Config,
-        opt_matches: Option<&ArgMatches>,
-    ) -> Result<(), GeneralError> {
+    pub fn sync_movies(config: &mut Config, print_json: bool) -> Result<(), GeneralError> {
         if config.debug > 1 {
             println!("Syncing movies");
         }
@@ -362,10 +337,6 @@ impl Movies {
             public_file_path,
             "the public file for movies"
         );
-        let is_json = match opt_matches {
-            Some(matches) => matches.get_flag("json"),
-            None => false,
-        };
         let movies_by_date = Movies::group_movies_by_date(&movies);
         // create an hashmap with the date as key and the movies number for that date as value
         let movie_by_date_count: std::collections::HashMap<u64, u64> = movies_by_date
@@ -379,7 +350,7 @@ impl Movies {
         let mut buf = Vec::new();
         let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
         movie_by_date_count.serialize(&mut ser)?;
-        if is_json {
+        if print_json {
             let movies_str = String::from_utf8(buf)?;
             println!("{movies_str}");
         } else {

@@ -3,16 +3,13 @@
 //! n4n5 gh
 //! ```
 
-use clap::{arg, ArgAction, ArgMatches, Command as ClapCommand};
+use clap::{arg, ArgAction, Subcommand};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{fs::write, path::PathBuf, process::Command};
 
 use crate::{
-    cli::{input_path, CliCommand},
-    commands::gh::types::GhProject,
-    config::Config,
-    config_path,
+    cli::input_path, commands::gh::types::GhProject, config::Config, config_path,
     errors::GeneralError,
 };
 
@@ -36,38 +33,32 @@ pub struct Gh {
     pub file_projects: Option<String>,
 }
 
-impl CliCommand for Gh {
-    fn get_subcommand() -> ClapCommand {
-        ClapCommand::new("gh")
-            .about("Github cli wrap")
-            .subcommand(
-                ClapCommand::new("pulls").about("save pulls").arg(
-                    arg!(
-                        -j --json "print as json"
-                    )
-                    .action(ArgAction::SetTrue)
-                    .required(false),
-                ),
-            )
-            .subcommand(
-                ClapCommand::new("projects").about("save projects").arg(
-                    arg!(
-                        -j --json "print as json"
-                    )
-                    .action(ArgAction::SetTrue)
-                    .required(false),
-                ),
-            )
-            .arg_required_else_help(true)
-    }
+#[derive(Subcommand, Debug)]
+pub enum GhSubCommand {
+    /// Save pulls
+    Pulls {
+        /// Print as JSON
+        #[arg(short = 'j', long = "json", action = ArgAction::SetTrue)]
+        print_json: bool,
+    },
 
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
-        if let Some(matches) = args_matches.subcommand_matches("pulls") {
-            return Gh::save_pulls(config, Some(matches));
-        } else if let Some(matches) = args_matches.subcommand_matches("projects") {
-            return Gh::save_projects(config, Some(matches));
+    /// Save projects
+    Projects {
+        /// Print as JSON
+        #[arg(short = 'j', long = "json", action = ArgAction::SetTrue)]
+        print_json: bool,
+    },
+}
+
+impl GhSubCommand {
+    /// invoke subcommand
+    /// # Errors
+    /// Error if error in subcommand
+    pub fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
+        match self {
+            Self::Projects { print_json } => Gh::save_projects(config, print_json),
+            Self::Pulls { print_json: _ } => Gh::save_pulls(config),
         }
-        Ok(())
     }
 }
 
@@ -83,20 +74,17 @@ impl Gh {
     /// Sync the github data
     /// # Errors
     /// Fails if unable to save the pulls or projects
-    pub fn sync_github(
-        config: &mut Config,
-        matches: Option<&ArgMatches>,
-    ) -> Result<(), GeneralError> {
+    pub fn sync_github(config: &mut Config, is_json: bool) -> Result<(), GeneralError> {
         println!("Syncing github data");
-        Gh::save_pulls(config, matches)?;
-        Gh::save_projects(config, matches)?;
+        Gh::save_pulls(config)?;
+        Gh::save_projects(config, is_json)?;
         Ok(())
     }
 
     /// Save the pulls to the specified file
     /// # Errors
     /// Fails if unable to write to file
-    fn save_pulls(config: &mut Config, _matches: Option<&ArgMatches>) -> Result<(), GeneralError> {
+    fn save_pulls(config: &mut Config) -> Result<(), GeneralError> {
         let pulls_path = config_path!(config, gh, Gh, file_pulls, "pulls file");
         println!("Saving pulls to {}", pulls_path.display());
         let mut response_data = GhPageInfo {
@@ -290,19 +278,12 @@ impl Gh {
     /// Save the projects to the specified file
     /// # Errors
     /// Fails if unable to write to file
-    fn save_projects(
-        config: &mut Config,
-        matches: Option<&ArgMatches>,
-    ) -> Result<(), GeneralError> {
-        let is_json = match matches {
-            Some(matches) => matches.get_flag("json"),
-            None => false,
-        };
+    fn save_projects(config: &mut Config, print_json: bool) -> Result<(), GeneralError> {
         let projects_path = config_path!(config, gh, Gh, file_projects, "projects file");
-        if !is_json {
+        if !print_json {
             println!("Saving projects to {}", projects_path.display());
         }
-        let debug_level = match is_json {
+        let debug_level = match print_json {
             true => 0,
             false => config.debug + 1,
         };
@@ -310,7 +291,7 @@ impl Gh {
         repos.sort_by(|a, b| a.name.cmp(&b.name));
         let mut gists = Gh::fetch_projects(ProjectType::Gists, debug_level)?;
         gists.sort_by(|a, b| a.name.cmp(&b.name));
-        if !is_json {
+        if !print_json {
             println!(
                 "Saving {} repos and {} gists to {}",
                 repos.len(),
@@ -323,7 +304,7 @@ impl Gh {
         let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
         repos.append(&mut gists);
         repos.serialize(&mut ser)?;
-        if is_json {
+        if print_json {
             println!("{}", String::from_utf8_lossy(&buf));
         }
         write(&projects_path, buf)?;

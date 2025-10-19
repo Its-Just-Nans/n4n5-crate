@@ -10,11 +10,11 @@ use std::{
     process::Command,
 };
 
-use clap::{arg, ArgMatches, Command as ClapCommand};
+use clap::{arg, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli::{input_no, input_path, CliCommand},
+    cli::{input_no, input_path},
     commands::gh::lib::Gh,
     config::Config,
     config_path, config_sub_path,
@@ -47,48 +47,61 @@ pub struct ProgramsConfig {
     pub path_nix: Option<String>,
 }
 
-impl CliCommand for SyncCliCommand {
-    fn get_subcommand() -> ClapCommand {
-        ClapCommand::new("sync")
-            .about("sync subcommand")
-            .subcommand(
-                ClapCommand::new("settings")
-                    .about("save settings")
-                    .subcommand(ClapCommand::new("add").about("add a file to save"))
-                    .subcommand(ClapCommand::new("all").about("add a file to save"))
-                    .arg_required_else_help(true),
-            )
-            .subcommand(
-                ClapCommand::new("movies").about("sync movies").arg(
-                    arg!(
-                        -j --json ... "print as json"
-                    )
-                    .required(false),
-                ),
-            )
-            .subcommand(ClapCommand::new("programs").about("sync programs"))
-            .subcommand(ClapCommand::new("music").about("sync music"))
-            .subcommand(ClapCommand::new("all").about("sync all"))
-            .arg_required_else_help(true)
-    }
+#[derive(Subcommand, Debug)]
+pub enum SyncSubcommand {
+    /// save settings
+    Settings(SettingsCommand),
 
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
-        if let Some(matches) = args_matches.subcommand_matches("settings") {
-            if let Some(matches) = matches.subcommand_matches("add") {
-                return SyncCliCommand::add_file(config, matches);
-            } else if let Some(_matches) = matches.subcommand_matches("all") {
-                return SyncCliCommand::save_files(config);
-            }
-        } else if let Some(matches) = args_matches.subcommand_matches("movies") {
-            return Movies::sync_movies(config, Some(matches));
-        } else if let Some(_matches) = args_matches.subcommand_matches("programs") {
-            return SyncCliCommand::sync_programs(config);
-        } else if let Some(matches) = args_matches.subcommand_matches("all") {
-            return SyncCliCommand::sync_all(config, matches);
-        } else if let Some(matches) = args_matches.subcommand_matches("music") {
-            return MusicCliCommand::sync_music(config, matches);
+    /// sync movies
+    Movies {
+        /// print as json
+        #[arg(short = 'j', long = "json")]
+        print_json: bool,
+    },
+
+    /// sync programs
+    Programs,
+
+    /// sync music
+    Music,
+
+    /// sync all
+    All,
+}
+
+/// settings subcommand
+#[derive(Parser, Debug)]
+#[command(arg_required_else_help = true)]
+pub struct SettingsCommand {
+    /// settings subcommand
+    #[command(subcommand)]
+    pub action: SettingsAction,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum SettingsAction {
+    /// add a file to save
+    Add,
+
+    /// add all files to save
+    All,
+}
+
+impl SyncSubcommand {
+    /// invoke subcommand
+    /// # Errors
+    /// Error if error in subcommand
+    pub fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
+        match self {
+            Self::All => SyncCliCommand::sync_all(config),
+            Self::Music => MusicCliCommand::sync_music(config),
+            Self::Movies { print_json } => Movies::sync_movies(config, print_json),
+            Self::Programs => SyncCliCommand::sync_programs(config),
+            Self::Settings(settings) => match settings.action {
+                SettingsAction::Add => SyncCliCommand::add_file(config),
+                SettingsAction::All => SyncCliCommand::save_files(config),
+            },
         }
-        Ok(())
     }
 }
 
@@ -156,7 +169,7 @@ impl SyncCliCommand {
     /// Add a file to the list of files to save
     /// # Errors
     /// Returns an error if the file path is invalid
-    fn add_file(config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
+    fn add_file(config: &mut Config) -> Result<(), GeneralError> {
         println!("Please enter the path to the file to add:");
         let file_path = input_path()?;
         let cloned_path = file_path.1.clone();
@@ -296,13 +309,13 @@ impl SyncCliCommand {
     /// Sync all
     /// # Errors
     /// Returns an error if any of the subcommands fails
-    fn sync_all(config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
+    fn sync_all(config: &mut Config) -> Result<(), GeneralError> {
         config.use_input = false;
         if config.debug > 1 {
             println!("Syncing all");
         }
         if config.config_data.movies.is_some() {
-            Movies::sync_movies(config, None)?;
+            Movies::sync_movies(config, false)?;
             println!();
         }
         if config.config_data.sync.is_some() {
@@ -314,7 +327,7 @@ impl SyncCliCommand {
             println!();
         }
         if config.config_data.gh.is_some() {
-            Gh::sync_github(config, None)?;
+            Gh::sync_github(config, false)?;
         }
         Ok(())
     }

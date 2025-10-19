@@ -5,26 +5,27 @@
 //! ```
 //!
 
-use clap::{ArgMatches, Command as ClapCommand};
-use serde::{Deserialize, Serialize};
+use clap::Subcommand;
 
-use crate::{cli::CliCommand, config::Config, errors::GeneralError};
+use crate::{commands::utils::list_crates::UtilsListCrates, config::Config, errors::GeneralError};
 
 /// Movies configuration
-#[derive(Deserialize, Serialize, Default)]
-pub struct UtilsCliCommand {}
+#[derive(Subcommand, Debug)]
+pub enum UtilsSubCommand {
+    /// list_crates subcommand
+    #[command(name = "list_crates")]
+    ListCrates(UtilsListCrates),
+}
 
-impl CliCommand for UtilsCliCommand {
-    fn get_subcommand() -> ClapCommand {
-        ClapCommand::new("utils")
-            .about("utils")
-            .subcommand(Self::list_crates_args())
-            .arg_required_else_help(true)
-    }
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
-        if let Some(matches) = args_matches.subcommand_matches("list_crates") {
-            UtilsCliCommand::list_crates(config, matches)?;
+impl UtilsSubCommand {
+    /// invoke the subcommand
+    /// # Errors
+    /// Error if error in subcommand
+    pub fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
+        match self {
+            UtilsSubCommand::ListCrates(subcommand) => {
+                UtilsListCrates::list_crates(config, subcommand)
+            }
         }
-        Ok(())
     }
 }

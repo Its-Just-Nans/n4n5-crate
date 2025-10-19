@@ -10,8 +10,7 @@ use std::{
     path::Path,
 };
 
-use clap::{ArgMatches, Command as ClapCommand};
-use serde::{Deserialize, Serialize};
+use clap::{CommandFactory, Subcommand};
 
 use clap_complete::{
     generate_to,
@@ -19,43 +18,32 @@ use clap_complete::{
 };
 use clap_mangen::Man;
 
-use crate::{
-    cli::{get_cli_args, CliCommand},
-    config::Config,
-    errors::GeneralError,
-};
+use crate::{cli::CliArgs, config::Config, errors::GeneralError};
 
 /// Movies configuration
-#[derive(Deserialize, Serialize, Default)]
-pub struct HelpersCliCommand {}
-
-impl CliCommand for HelpersCliCommand {
-    fn get_subcommand() -> ClapCommand {
-        ClapCommand::new("helpers")
-            .about("helpers")
-            .subcommand(ClapCommand::new("completions").about("generate completions"))
-            .subcommand(ClapCommand::new("man").about("generate man"))
-            .arg_required_else_help(true)
-    }
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError> {
-        if let Some(matches) = args_matches.subcommand_matches("completions") {
-            HelpersCliCommand::gen_completions(config, matches)?;
-        } else if let Some(matches) = args_matches.subcommand_matches("man") {
-            HelpersCliCommand::gen_man(config, matches)?;
-        }
-        Ok(())
-    }
+#[derive(Subcommand, Debug)]
+pub enum HelpersSubcommand {
+    /// generate completions
+    Completions,
+    /// generate man
+    Man,
 }
 
-impl HelpersCliCommand {
+impl HelpersSubcommand {
+    /// invoke subcommand
+    /// # Errors
+    /// Error if error in subcommand
+    pub fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
+        match self {
+            HelpersSubcommand::Completions => Self::gen_completions(config),
+            HelpersSubcommand::Man => Self::gen_man(config),
+        }
+    }
     /// Get the music file path
     /// # Errors
     /// Fails if the file cannot be found
-    pub fn gen_completions(
-        _config: &mut Config,
-        _matches: &ArgMatches,
-    ) -> Result<(), GeneralError> {
-        let mut cmd = get_cli_args();
+    pub fn gen_completions(_config: &mut Config) -> Result<(), GeneralError> {
+        let mut cmd = CliArgs::command();
         let app_name = env!("CARGO_CRATE_NAME");
         let outdir = Path::new("completions");
 
@@ -73,8 +61,8 @@ impl HelpersCliCommand {
     /// generate man page
     /// # Errors
     /// Fails if error
-    pub fn gen_man(_config: &mut Config, _matches: &ArgMatches) -> Result<(), GeneralError> {
-        let cmd = get_cli_args();
+    pub fn gen_man(_config: &mut Config) -> Result<(), GeneralError> {
+        let cmd = CliArgs::command();
         let app_name = env!("CARGO_CRATE_NAME");
         let filename = format!("{}.1", app_name);
         let mut file = File::create(filename)?;

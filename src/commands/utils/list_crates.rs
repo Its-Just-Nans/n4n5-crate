@@ -5,16 +5,12 @@ use std::{fs, thread, time::Duration};
 use crate::{
     commands::{
         gh::lib::get_github_username,
-        utils::{
-            lib::UtilsCliCommand,
-            types::{CrateData, CrateResponse, UserResponse},
-        },
+        utils::types::{CrateData, CrateResponse, UserResponse},
     },
     config::Config,
     errors::GeneralError,
 };
-use clap::{ArgMatches, Command};
-use clap::{CommandFactory, Parser};
+use clap::Parser;
 use reqwest::blocking::Client;
 
 /// Get user agent
@@ -23,7 +19,7 @@ fn get_user_agent() -> String {
 }
 
 /// A simple CLI example
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(name = "list_crates")]
 pub struct UtilsListCrates {
     /// Specify username
@@ -34,42 +30,25 @@ pub struct UtilsListCrates {
     #[arg(short, long)]
     output_file: Option<String>,
 
-    /// Request delay
+    /// Request delay (in seconds)
     #[arg(short, long)]
     delay: Option<f64>,
 
     /// Full crates info
-    #[arg(short, long, default_value_t = true)]
+    #[arg(short = 'f', long, default_value_t = false)]
     full: bool,
 }
 
-impl UtilsCliCommand {
-    /// Sub command for list_crates
-    pub fn list_crates_args() -> Command {
-        UtilsListCrates::command()
-    }
-
+impl UtilsListCrates {
     /// Get the music file path
     /// # Errors
     /// Fails if the file cannot be found
-    pub fn list_crates(_config: &mut Config, matches: &ArgMatches) -> Result<(), GeneralError> {
-        let username = if let Some(username) = matches.get_one::<String>("username") {
-            username.to_string()
-        } else {
-            get_github_username()
-        };
-        let output_file = if let Some(output_file) = matches.get_one::<String>("output_file") {
-            output_file.to_string()
-        } else {
-            "list.json".to_string()
-        };
-        let delay = if let Some(delay) = matches.get_one::<f64>("delay") {
-            *delay
-        } else {
-            0.5
-        };
+    pub fn list_crates(_config: &mut Config, options: UtilsListCrates) -> Result<(), GeneralError> {
+        let username = options.username.unwrap_or(get_github_username());
+        let output_file = options.output_file.unwrap_or("list.json".to_string());
+        let delay = options.delay.unwrap_or(0.5);
         let delay = (delay * 1000.0) as u64;
-        let need_full = matches.get_flag("full");
+        let need_full = options.full;
         let verbose = output_file != "-";
         let per_page: usize = 50;
         let user_agent = get_user_agent();

@@ -4,47 +4,82 @@ use std::path::PathBuf;
 
 use crate::{
     commands::{
-        gh::lib::Gh, helpers::HelpersCliCommand, movies::Movies, music::MusicCliCommand,
-        sync::SyncCliCommand, utils::lib::UtilsCliCommand,
+        config::ConfigSubcommand, gh::lib::GhSubCommand, helpers::HelpersSubcommand,
+        movies::MoviesSubCommand, music::MusicSubcommand, sync::SyncSubcommand,
+        utils::lib::UtilsSubCommand,
     },
     config::Config,
     errors::GeneralError,
 };
-use clap::{arg, command, value_parser, ArgMatches, Command};
+use clap::{arg, command, Parser, Subcommand};
 
-/// A trait for CLI commands
-pub(crate) trait CliCommand {
-    /// Invoke the command
-    /// # Errors
-    /// Returns a GeneralError if the command fails
-    fn invoke(config: &mut Config, args_matches: &ArgMatches) -> Result<(), GeneralError>;
+/// Example CLI using clap derive and subcommands
+#[derive(Parser, Debug)]
+#[command(name = "n4n5")]
+#[command(about = "n4n5 CLI", long_about = None)]
+pub struct CliArgs {
+    /// Sets a custom config file
+    #[arg(short, long, value_name = "FILE")]
+    pub config: Option<PathBuf>,
 
-    /// Get the subcommand
-    fn get_subcommand() -> Command;
+    /// Turn debugging information on
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    pub debug: u8,
+
+    /// Subcommands
+    #[command(subcommand)]
+    pub command: Commands,
 }
 
-/// Get CLI clap args
-pub(crate) fn get_cli_args() -> Command {
-    command!() // requires `cargo` feature
-        .arg(
-            arg!(
-                -c --config <FILE> "Sets a custom config file"
-            )
-            // We don't have syntax yet for optional options, so manually calling `required`
-            .required(false)
-            .value_parser(value_parser!(PathBuf)),
-        )
-        .arg(arg!(
-            -d --debug ... "Turn debugging information on"
-        ))
-        .subcommand(Movies::get_subcommand())
-        .subcommand(SyncCliCommand::get_subcommand())
-        .subcommand(Gh::get_subcommand())
-        .subcommand(Config::get_subcommand())
-        .subcommand(MusicCliCommand::get_subcommand())
-        .subcommand(HelpersCliCommand::get_subcommand())
-        .subcommand(UtilsCliCommand::get_subcommand())
-        .arg_required_else_help(true)
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    /// utils subcommand
+    Utils {
+        /// list of subcommands
+        #[command(subcommand)]
+        subcommand: UtilsSubCommand,
+    },
+
+    /// music subcommand
+    Music {
+        /// list of subcommands
+        #[command(subcommand)]
+        subcommand: MusicSubcommand,
+    },
+
+    /// config subcommand
+    Config {
+        /// list of subcommands
+        #[command(subcommand)]
+        subcommand: ConfigSubcommand,
+    },
+
+    /// gh subcommand
+    Gh {
+        /// list of subcommands
+        #[command(subcommand)]
+        subcommand: GhSubCommand,
+    },
+
+    /// helpers subcommand
+    Helpers {
+        /// list of subcommands
+        #[command(subcommand)]
+        subcommand: HelpersSubcommand,
+    },
+    /// movies subcommand
+    Movies {
+        /// list of subcommands
+        #[command(subcommand)]
+        subcommand: MoviesSubCommand,
+    },
+
+    /// sync subcommand
+    Sync {
+        /// list of subcommands
+        #[command(subcommand)]
+        subcommand: SyncSubcommand,
+    },
 }
 
 /// The CLI main function
@@ -52,36 +87,21 @@ pub(crate) fn get_cli_args() -> Command {
 /// # Errors
 /// Returns a GeneralError if the command fails
 pub fn cli_main() -> Result<(), GeneralError> {
-    let matches = get_cli_args().get_matches();
-    let mut config = match matches.get_one::<PathBuf>("config") {
+    let cli = CliArgs::parse();
+    let mut config = match cli.config {
         Some(config_path) => Config::new_from_path(config_path.clone())?,
         None => Config::new(),
     };
-    match matches
-        .get_one::<u8>("debug")
-        .ok_or_else(|| GeneralError::new("Debug value not found".to_string()))?
-    {
-        0 => {}
-        value => {
-            config.set_debug(*value);
-        }
+    config.set_debug(cli.debug);
+    match cli.command {
+        Commands::Utils { subcommand } => subcommand.invoke(&mut config),
+        Commands::Music { subcommand } => subcommand.invoke(&mut config),
+        Commands::Config { subcommand } => subcommand.invoke(&mut config),
+        Commands::Gh { subcommand } => subcommand.invoke(&mut config),
+        Commands::Helpers { subcommand } => subcommand.invoke(&mut config),
+        Commands::Movies { subcommand } => subcommand.invoke(&mut config),
+        Commands::Sync { subcommand } => subcommand.invoke(&mut config),
     }
-    if let Some(matches) = matches.subcommand_matches("movies") {
-        return Movies::invoke(&mut config, matches);
-    } else if let Some(matches) = matches.subcommand_matches("sync") {
-        return SyncCliCommand::invoke(&mut config, matches);
-    } else if let Some(matches) = matches.subcommand_matches("gh") {
-        return Gh::invoke(&mut config, matches);
-    } else if let Some(matches) = matches.subcommand_matches("config") {
-        return Config::invoke(&mut config, matches);
-    } else if let Some(matches) = matches.subcommand_matches("music") {
-        return MusicCliCommand::invoke(&mut config, matches);
-    } else if let Some(matches) = matches.subcommand_matches("helpers") {
-        return HelpersCliCommand::invoke(&mut config, matches);
-    } else if let Some(matches) = matches.subcommand_matches("utils") {
-        return UtilsCliCommand::invoke(&mut config, matches);
-    }
-    Ok(())
 }
 
 /// Get input from the user with a prompt
