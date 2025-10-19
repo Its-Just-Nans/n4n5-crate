@@ -3,7 +3,7 @@
 //! n4n5 gh
 //! ```
 
-use clap::{arg, ArgAction, Subcommand};
+use clap::{ArgAction, Subcommand};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{fs::write, path::PathBuf, process::Command};

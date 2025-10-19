@@ -1,7 +1,7 @@
 //! Config subcommand
 use std::process::Command;
 
-use clap::{arg, ArgAction, Subcommand};
+use clap::{ArgAction, Subcommand};
 
 use crate::{config::Config, errors::GeneralError};
 

@@ -5,7 +5,7 @@
 //!
 use std::{collections::BTreeMap, fs::read_to_string, path::PathBuf, process::Command};
 
-use clap::{arg, ArgAction, Subcommand};
+use clap::{ArgAction, Subcommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{

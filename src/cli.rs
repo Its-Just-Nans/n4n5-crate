@@ -11,7 +11,7 @@ use crate::{
     config::Config,
     errors::GeneralError,
 };
-use clap::{arg, command, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
 /// Example CLI using clap derive and subcommands
 #[derive(Parser, Debug)]
@@ -114,7 +114,7 @@ pub fn get_input(text: &str) -> String {
 /// # Panics
 /// Panics if the input is not a valid string
 pub fn input() -> String {
-    use std::io::{stdin, stdout, Write};
+    use std::io::{Write, stdin, stdout};
     let mut s = String::new();
     let _ = stdout().flush();
     stdin()

@@ -7,7 +7,7 @@ use crate::{
 use home::home_dir;
 use serde::{Deserialize, Serialize};
 use std::{
-    fs::{create_dir_all, read_to_string, File},
+    fs::{File, create_dir_all, read_to_string},
     io::Write,
     path::PathBuf,
     str,

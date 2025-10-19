@@ -6,7 +6,7 @@
 
 use std::{path::PathBuf, process::Command};
 
-use clap::{arg, ArgAction, Subcommand};
+use clap::{ArgAction, Subcommand};
 use music_exporter::PlatformType;
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;

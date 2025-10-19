@@ -4,13 +4,13 @@
 //! ```
 //!
 use std::{
-    fs::{create_dir_all, write, File},
+    fs::{File, create_dir_all, write},
     io,
     path::PathBuf,
     process::Command,
 };
 
-use clap::{arg, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{
