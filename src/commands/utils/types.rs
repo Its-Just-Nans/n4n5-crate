@@ -41,6 +41,8 @@ pub struct CrateData {
 /// Crate inner data
 #[derive(Deserialize, Serialize, Debug)]
 pub struct CrateInnerData {
+    /// crate name
+    pub name: String,
     /// repository url
     pub repository: Option<String>,
     /// homepage url

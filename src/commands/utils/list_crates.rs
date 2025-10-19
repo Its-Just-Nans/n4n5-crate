@@ -36,7 +36,7 @@ pub struct UtilsListCrates {
 
     /// Request delay
     #[arg(short, long)]
-    delay: Option<u64>,
+    delay: Option<f64>,
 
     /// Full crates info
     #[arg(short, long, default_value_t = true)]
@@ -63,11 +63,12 @@ impl UtilsCliCommand {
         } else {
             "list.json".to_string()
         };
-        let delay = if let Some(delay) = matches.get_one::<u64>("delay") {
+        let delay = if let Some(delay) = matches.get_one::<f64>("delay") {
             *delay
         } else {
-            0.5 as u64
+            0.5
         };
+        let delay = (delay * 1000.0) as u64;
         let need_full = matches.get_flag("full");
         let verbose = output_file != "-";
         let per_page: usize = 50;
@@ -99,7 +100,7 @@ impl UtilsCliCommand {
         let mut all_crates: Vec<String> = Vec::new();
 
         loop {
-            thread::sleep(Duration::from_secs(delay)); // avoid rate limit
+            thread::sleep(Duration::from_millis(delay)); // avoid rate limit
 
             let url = format!(
                 "https://crates.io/api/v1/crates?user_id={}&page={}&per_page={}",
@@ -162,7 +163,7 @@ impl UtilsCliCommand {
     /// Error if request fails or serde fails
     pub fn get_one_crate(crate_name: &String, delay: u64) -> Result<CrateData, GeneralError> {
         // Sleep 0.5 seconds to avoid rate limiting
-        thread::sleep(Duration::from_secs(delay));
+        thread::sleep(Duration::from_millis(delay));
         let user_agent = get_user_agent();
         let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
         let client = Client::new();
