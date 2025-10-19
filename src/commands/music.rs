@@ -2,7 +2,7 @@
 //! ```shell
 //! n4n5 music
 //! ```
-//!use serde::Serialize;
+//!
 
 use std::{path::PathBuf, process::Command};
 

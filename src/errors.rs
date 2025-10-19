@@ -35,7 +35,7 @@ impl GeneralError {
 }
 
 impl std::fmt::Display for GeneralError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(from) = &self.from {
             write!(f, "GeneralError: {} from {}", self.message, from)
         } else {
@@ -83,6 +83,12 @@ impl From<FromUtf8Error> for GeneralError {
 
 impl From<toml::ser::Error> for GeneralError {
     fn from(value: toml::ser::Error) -> Self {
+        GeneralError::new_with_source("Toml Ser Error".to_string(), value.into())
+    }
+}
+
+impl From<reqwest::Error> for GeneralError {
+    fn from(value: reqwest::Error) -> Self {
         GeneralError::new_with_source("Toml Ser Error".to_string(), value.into())
     }
 }

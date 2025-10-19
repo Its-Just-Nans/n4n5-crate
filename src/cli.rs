@@ -1,8 +1,12 @@
 //! The CLI module
+
 use std::path::PathBuf;
 
 use crate::{
-    commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand},
+    commands::{
+        gh::lib::Gh, helpers::HelpersCliCommand, movies::Movies, music::MusicCliCommand,
+        sync::SyncCliCommand, utils::lib::UtilsCliCommand,
+    },
     config::Config,
     errors::GeneralError,
 };
@@ -19,12 +23,9 @@ pub(crate) trait CliCommand {
     fn get_subcommand() -> Command;
 }
 
-/// The CLI main function
-/// Handle all arguments and invoke the correct command
-/// # Errors
-/// Returns a GeneralError if the command fails
-pub fn cli_main() -> Result<(), GeneralError> {
-    let matches = command!() // requires `cargo` feature
+/// Get CLI clap args
+pub(crate) fn get_cli_args() -> Command {
+    command!() // requires `cargo` feature
         .arg(
             arg!(
                 -c --config <FILE> "Sets a custom config file"
@@ -41,8 +42,17 @@ pub fn cli_main() -> Result<(), GeneralError> {
         .subcommand(Gh::get_subcommand())
         .subcommand(Config::get_subcommand())
         .subcommand(MusicCliCommand::get_subcommand())
+        .subcommand(HelpersCliCommand::get_subcommand())
+        .subcommand(UtilsCliCommand::get_subcommand())
         .arg_required_else_help(true)
-        .get_matches();
+}
+
+/// The CLI main function
+/// Handle all arguments and invoke the correct command
+/// # Errors
+/// Returns a GeneralError if the command fails
+pub fn cli_main() -> Result<(), GeneralError> {
+    let matches = get_cli_args().get_matches();
     let mut config = match matches.get_one::<PathBuf>("config") {
         Some(config_path) => Config::new_from_path(config_path.clone())?,
         None => Config::new(),
@@ -66,6 +76,10 @@ pub fn cli_main() -> Result<(), GeneralError> {
         return Config::invoke(&mut config, matches);
     } else if let Some(matches) = matches.subcommand_matches("music") {
         return MusicCliCommand::invoke(&mut config, matches);
+    } else if let Some(matches) = matches.subcommand_matches("helpers") {
+        return HelpersCliCommand::invoke(&mut config, matches);
+    } else if let Some(matches) = matches.subcommand_matches("utils") {
+        return UtilsCliCommand::invoke(&mut config, matches);
     }
     Ok(())
 }

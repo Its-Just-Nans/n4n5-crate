@@ -1,6 +1,6 @@
 [package]
 name = "n4n5"
-version = "1.0.7"
+version = "1.0.8"
 edition = "2021"
 description = "n4n5's utility crate"
 documentation = "https://docs.rs/n4n5"
@@ -12,13 +12,16 @@ categories = ["command-line-utilities"]
 rust-version = "1.83.0"
 
 [dependencies]
-clap = { version = "4.5", features = ["cargo"] }
+clap = { version = "4.5", features = ["cargo", "derive"] }
 env_logger = "0.11"
 home = "0.5.11"
 log = "0.4"
 music-exporter = "1.0.8"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = "1.44.1"
-toml = "0.9.6"
+tokio = "1.48"
+toml = "0.9"
 openssl = { version = "0.10", features = ["vendored"] }
+clap_complete = "4.5.59"
+clap_mangen = "0.2.30"
+reqwest = { version = "0.12.24", features = ["blocking"] }

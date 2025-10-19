@@ -7,6 +7,7 @@
 //! n4n5
 //! ```
 
+#![warn(clippy::all, rust_2018_idioms)]
 #![deny(
     missing_docs,
     clippy::all,

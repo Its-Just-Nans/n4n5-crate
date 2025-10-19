@@ -18,6 +18,11 @@ use crate::{
 
 use super::types::{GhPageInfo, GhResponse};
 
+/// Get github username
+pub(crate) fn get_github_username() -> String {
+    "Its-Just-Nans".to_string()
+}
+
 /// Github configuration
 #[derive(Deserialize, Serialize, Default)]
 pub struct Gh {
