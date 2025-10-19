@@ -21,7 +21,7 @@
 pub(crate) mod cli;
 pub(crate) mod commands;
 pub mod config;
-pub(crate) mod errors;
+pub mod errors;
 pub(crate) mod macros;
 pub(crate) use macros::config_path;
 pub(crate) use macros::config_sub_path;
