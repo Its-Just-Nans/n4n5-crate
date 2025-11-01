@@ -6,7 +6,7 @@
 use clap::{ArgAction, Subcommand};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, fs::write, path::PathBuf, process::Command};
+use std::{collections::BTreeMap, fs::write, path::PathBuf, process::Command};
 
 use crate::{
     cli::input_path, commands::gh::types::GhProject, config::Config, config_path,
@@ -303,7 +303,7 @@ impl Gh {
                 projects_path.display()
             );
         }
-        let map: HashMap<String, Option<u64>> = repos
+        let map: BTreeMap<String, Option<u64>> = repos
             .iter()
             .map(|p| (p.url.replace("https://", "").to_string(), p.disk_usage))
             .collect();
