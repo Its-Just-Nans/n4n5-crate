@@ -159,6 +159,7 @@ pub struct GhProject {
     pub license_info: Option<GhLicenseInfo>,
 
     /// Disk usage
+    #[serde(skip_serializing)]
     #[serde(rename = "diskUsage")]
     pub disk_usage: Option<u64>,
 

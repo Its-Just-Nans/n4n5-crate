@@ -6,11 +6,11 @@
 use clap::{ArgAction, Subcommand};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{fs::write, path::PathBuf, process::Command};
+use std::{collections::HashMap, fs::write, path::PathBuf, process::Command};
 
 use crate::{
     cli::input_path, commands::gh::types::GhProject, config::Config, config_path,
-    errors::GeneralError,
+    errors::GeneralError, utils::serde_pretty_print,
 };
 
 use super::types::{GhPageInfo, GhResponse};
@@ -31,6 +31,9 @@ pub struct Gh {
 
     /// Path to the projects file
     pub file_projects: Option<String>,
+
+    /// Path to the projects file disk usage
+    pub file_projects_disk: Option<String>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -280,6 +283,7 @@ impl Gh {
     /// Fails if unable to write to file
     fn save_projects(config: &mut Config, print_json: bool) -> Result<(), GeneralError> {
         let projects_path = config_path!(config, gh, Gh, file_projects, "projects file");
+        let projects_path_disk = config_path!(config, gh, Gh, file_projects_disk, "projects file");
         if !print_json {
             println!("Saving projects to {}", projects_path.display());
         }
@@ -299,15 +303,14 @@ impl Gh {
                 projects_path.display()
             );
         }
-        let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
-        let mut buf = Vec::new();
-        let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
+        let map: HashMap<String, Option<u64>> = repos
+            .iter()
+            .map(|p| (p.url.replace("https://", "").to_string(), p.disk_usage))
+            .collect();
+
+        serde_pretty_print(map, &projects_path_disk, print_json)?;
         repos.append(&mut gists);
-        repos.serialize(&mut ser)?;
-        if print_json {
-            println!("{}", String::from_utf8_lossy(&buf));
-        }
-        write(&projects_path, buf)?;
+        serde_pretty_print(repos, &projects_path, print_json)?;
         Ok(())
     }
 }
