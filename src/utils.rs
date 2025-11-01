@@ -7,7 +7,7 @@ use std::fs::write;
 
 /// Write date to a file, with pretty json
 /// # Errors
-/// Fails if serilize fails or wirte fail
+/// Fails if serialize fails or write fails
 pub(crate) fn serde_pretty_print<T>(
     data: T,
     path_file: &Path,
