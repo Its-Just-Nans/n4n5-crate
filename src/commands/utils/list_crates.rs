@@ -9,6 +9,7 @@ use crate::{
     },
     config::Config,
     errors::GeneralError,
+    utils::table_to_markdown_table,
 };
 use clap::Parser;
 use reqwest::blocking::Client;
@@ -117,43 +118,6 @@ impl UtilsListCrates {
         Ok(all_crates)
     }
 
-    /// Format a table to markdown
-    /// # Errors
-    /// Fails if fmt error
-    pub fn format_table<I>(table: I) -> Result<String, std::fmt::Error>
-    where
-        I: Iterator<Item = Vec<String>> + Clone,
-    {
-        let mut buf = String::new();
-        let max_sizes = table.clone().fold([0usize; 3], |mut acc, row| {
-            for (i, cell) in row.iter().enumerate() {
-                acc[i] = acc[i].max(cell.len());
-            }
-            acc
-        });
-
-        for (i, row) in table.enumerate() {
-            let line = row
-                .iter()
-                .zip(max_sizes)
-                .map(|(s, width)| format!("{:width$}", s, width = width))
-                .collect::<Vec<_>>()
-                .join(" | ");
-            writeln!(&mut buf, "| {} |", line)?;
-
-            // separator after header
-            if i == 0 {
-                let sep = max_sizes
-                    .iter()
-                    .map(|&w| "-".repeat(w))
-                    .collect::<Vec<_>>()
-                    .join(" | ");
-                writeln!(&mut buf, "| {} |", sep)?;
-            }
-        }
-        Ok(buf)
-    }
-
     /// Generate markdown tables as string
     /// # Errors
     /// Error if fails to convert to string
@@ -190,18 +154,18 @@ impl UtilsListCrates {
         }
         let mut buf = String::new();
         let table1 = header.clone().into_iter().chain(table1);
-        let table1_markdown = Self::format_table(table1)?;
+        let table1_markdown = table_to_markdown_table(table1)?;
         write!(&mut buf, "{}", table1_markdown)?;
         if !table2.is_empty() {
             writeln!(&mut buf, "\n## Incoming\n")?;
             let table2 = header.clone().into_iter().chain(table2);
-            let table2_markdown = Self::format_table(table2)?;
+            let table2_markdown = table_to_markdown_table(table2)?;
             write!(&mut buf, "{}", table2_markdown)?;
         }
         if !table3.is_empty() {
             writeln!(&mut buf, "\n## Others\n")?;
             let table3 = header.into_iter().chain(table3);
-            let table3_markdown = Self::format_table(table3)?;
+            let table3_markdown = table_to_markdown_table(table3)?;
             write!(&mut buf, "{}", table3_markdown)?;
         }
         Ok(buf)
