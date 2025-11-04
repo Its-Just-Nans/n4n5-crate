@@ -89,6 +89,12 @@ impl From<toml::ser::Error> for GeneralError {
 
 impl From<reqwest::Error> for GeneralError {
     fn from(value: reqwest::Error) -> Self {
-        GeneralError::new_with_source("Toml Ser Error".to_string(), value.into())
+        GeneralError::new_with_source("reqwest Error".to_string(), value.into())
+    }
+}
+
+impl From<std::fmt::Error> for GeneralError {
+    fn from(value: std::fmt::Error) -> Self {
+        GeneralError::new_with_source("fmt error".to_string(), value.into())
     }
 }

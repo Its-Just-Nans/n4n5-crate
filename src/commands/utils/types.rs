@@ -31,7 +31,7 @@ pub(crate) struct CrateInfo {
 }
 
 /// crate data from crates.io
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CrateData {
     /// inner crate data
     #[serde(rename = "crate")]
@@ -39,7 +39,7 @@ pub struct CrateData {
 }
 
 /// Crate inner data
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CrateInnerData {
     /// crate name
     pub name: String,

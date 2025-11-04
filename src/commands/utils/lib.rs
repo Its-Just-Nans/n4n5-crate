@@ -23,9 +23,7 @@ impl UtilsSubCommand {
     /// Error if error in subcommand
     pub fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
         match self {
-            UtilsSubCommand::ListCrates(subcommand) => {
-                UtilsListCrates::list_crates(config, subcommand)
-            }
+            UtilsSubCommand::ListCrates(subcommand) => subcommand.list_crates(config),
         }
     }
 }
