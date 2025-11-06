@@ -154,18 +154,18 @@ impl UtilsListCrates {
         }
         let mut buf = String::new();
         let table1 = header.clone().into_iter().chain(table1);
-        let table1_markdown = table_to_markdown_table(table1)?;
+        let table1_markdown = table_to_markdown_table(table1, 3)?;
         write!(&mut buf, "{}", table1_markdown)?;
         if !table2.is_empty() {
             writeln!(&mut buf, "\n## Incoming\n")?;
             let table2 = header.clone().into_iter().chain(table2);
-            let table2_markdown = table_to_markdown_table(table2)?;
+            let table2_markdown = table_to_markdown_table(table2, 3)?;
             write!(&mut buf, "{}", table2_markdown)?;
         }
         if !table3.is_empty() {
             writeln!(&mut buf, "\n## Others\n")?;
             let table3 = header.into_iter().chain(table3);
-            let table3_markdown = table_to_markdown_table(table3)?;
+            let table3_markdown = table_to_markdown_table(table3, 3)?;
             write!(&mut buf, "{}", table3_markdown)?;
         }
         Ok(buf)

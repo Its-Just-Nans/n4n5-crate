@@ -30,12 +30,12 @@ where
 /// Format a table to markdown
 /// # Errors
 /// Fails if fmt error
-pub fn table_to_markdown_table<I>(table: I) -> Result<String, std::fmt::Error>
+pub fn table_to_markdown_table<I>(table: I, columns: usize) -> Result<String, std::fmt::Error>
 where
     I: Iterator<Item = Vec<String>> + Clone,
 {
     let mut buf = String::new();
-    let max_sizes = table.clone().fold([0usize; 3], |mut acc, row| {
+    let max_sizes = table.clone().fold(vec![0; columns], |mut acc, row| {
         for (i, cell) in row.iter().enumerate() {
             acc[i] = acc[i].max(cell.len());
         }
@@ -45,7 +45,7 @@ where
     for (i, row) in table.enumerate() {
         let line = row
             .iter()
-            .zip(max_sizes)
+            .zip(&max_sizes)
             .map(|(s, width)| format!("{:width$}", s, width = width))
             .collect::<Vec<_>>()
             .join(" | ");
