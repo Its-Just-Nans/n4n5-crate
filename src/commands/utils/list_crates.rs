@@ -24,31 +24,27 @@ fn get_user_agent() -> String {
 #[command(name = "list_crates")]
 pub struct UtilsListCrates {
     /// Specify username
-    #[arg(short, long, default_value_t = get_github_username())]
+    #[arg(long, default_value_t = get_github_username())]
     username: String,
     /// Specify user agent
     #[arg(long, default_value_t = get_user_agent())]
     user_agent: String,
 
     /// Output markdown
-    #[arg(short, long)]
+    #[arg(long)]
     output_markdown: Option<PathBuf>,
 
     /// Output list
-    #[arg(short, long)]
+    #[arg(long)]
     output_list: Option<PathBuf>,
 
     /// Output list long/full
-    #[arg(short, long)]
+    #[arg(long)]
     output_list_full: Option<PathBuf>,
 
     /// Request delay (in seconds)
-    #[arg(short, long, default_value_t = 0.5)]
+    #[arg(long, default_value_t = 0.5)]
     delay: f64,
-
-    /// Output markdown
-    #[arg(short = 'm', long, default_value_t = false)]
-    markdown: bool,
 
     /// Filter crates
     #[arg(long, default_value_t = false)]
