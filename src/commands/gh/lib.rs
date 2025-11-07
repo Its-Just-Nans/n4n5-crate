@@ -10,7 +10,7 @@ use std::{collections::BTreeMap, fs::write, path::PathBuf, process::Command};
 
 use crate::{
     cli::input_path, commands::gh::types::GhProject, config::Config, config_path,
-    errors::GeneralError, utils::serde_pretty_print,
+    errors::GeneralError, utils::pretty_print,
 };
 
 use super::types::{GhPageInfo, GhResponse};
@@ -308,9 +308,9 @@ impl Gh {
             .map(|p| (p.url.replace("https://", "").to_string(), p.disk_usage))
             .collect();
 
-        serde_pretty_print(map, &projects_path_disk, print_json)?;
+        pretty_print(map, &projects_path_disk)?;
         repos.append(&mut gists);
-        serde_pretty_print(repos, &projects_path, print_json)?;
+        pretty_print(repos, &projects_path)?;
         Ok(())
     }
 }

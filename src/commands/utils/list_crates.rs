@@ -1,6 +1,6 @@
 //! list_crates
 
-use std::{fmt::Write, fs, thread, time::Duration, vec};
+use std::{fmt::Write, fs, path::PathBuf, thread, time::Duration, vec};
 
 use crate::{
     commands::{
@@ -9,7 +9,7 @@ use crate::{
     },
     config::Config,
     errors::GeneralError,
-    utils::table_to_markdown_table,
+    utils::{pretty_print, table_to_markdown_table},
 };
 use clap::Parser;
 use reqwest::blocking::Client;
@@ -17,11 +17,6 @@ use reqwest::blocking::Client;
 /// Get user agent
 fn get_user_agent() -> String {
     "n4n5 (https://github.com/Its-Just-Nans/n4n5)".to_string()
-}
-
-/// Get default output file
-fn get_default_output_file() -> String {
-    "list.json".to_string()
 }
 
 /// A simple CLI example
@@ -35,17 +30,21 @@ pub struct UtilsListCrates {
     #[arg(long, default_value_t = get_user_agent())]
     user_agent: String,
 
-    /// Output filename
-    #[arg(short, long, default_value_t = get_default_output_file())]
-    output_file: String,
+    /// Output markdown
+    #[arg(short, long)]
+    output_markdown: Option<PathBuf>,
+
+    /// Output list
+    #[arg(short, long)]
+    output_list: Option<PathBuf>,
+
+    /// Output list long/full
+    #[arg(short, long)]
+    output_list_full: Option<PathBuf>,
 
     /// Request delay (in seconds)
     #[arg(short, long, default_value_t = 0.5)]
     delay: f64,
-
-    /// Full crates info
-    #[arg(short = 'f', long, default_value_t = false)]
-    full: bool,
 
     /// Output markdown
     #[arg(short = 'm', long, default_value_t = false)]
@@ -54,6 +53,10 @@ pub struct UtilsListCrates {
     /// Filter crates
     #[arg(long, default_value_t = false)]
     filtered: bool,
+
+    /// Filter crates
+    #[arg(long, default_value_t = false)]
+    verbose: bool,
 
     /// Filter crates
     #[arg(long)]
@@ -176,18 +179,12 @@ impl UtilsListCrates {
     /// Fails if the file cannot be found
     pub fn list_crates(&self, _config: &mut Config) -> Result<(), GeneralError> {
         let delay = (self.delay * 1000.0) as u64;
-        let need_full = self.full;
-        let verbose = self.output_file != "-";
 
-        let all_crates = self.get_all_crates(verbose, delay)?;
-        if !need_full {
-            let stringify = serde_json::to_string_pretty(&all_crates)?;
-            if self.output_file == "-" {
-                println!("{}", stringify);
-            } else {
-                fs::write(&self.output_file, stringify)?;
-                println!("Written to {}", self.output_file);
-            }
+        let all_crates = self.get_all_crates(self.verbose, delay)?;
+        if let Some(list_file) = &self.output_list {
+            pretty_print(&all_crates, list_file)?;
+        }
+        if self.output_list_full.is_none() && self.output_markdown.is_none() {
             return Ok(());
         }
         let all_crates_infos: Vec<CrateData> = all_crates
@@ -201,16 +198,14 @@ impl UtilsListCrates {
                 }
             })
             .collect();
-        if !self.markdown {
-            let stringify = serde_json::to_string_pretty(&all_crates_infos)?;
-            if self.output_file == "-" {
-                println!("{}", stringify);
-                return Ok(());
-            }
-            fs::write(&self.output_file, stringify)?;
-            println!("Written to {}", self.output_file);
-            return Ok(());
+        if let Some(file_list_full) = &self.output_list_full {
+            pretty_print(&all_crates_infos, file_list_full)?;
         }
+        let file_markdown = if let Some(file_markdown) = &self.output_markdown {
+            file_markdown
+        } else {
+            return Ok(());
+        };
         let rows = all_crates_infos.iter().map(|one_crate| {
             let CrateInnerData {
                 description,
@@ -249,17 +244,13 @@ impl UtilsListCrates {
             self.username
         )?;
         write!(&mut buf, "{}", tables)?;
-        if self.output_file == "-" {
+
+        if file_markdown == &PathBuf::from("-") {
             print!("{}", buf);
             return Ok(());
         }
-        let output_markdown = if self.output_file == get_default_output_file() {
-            "README.md".to_string()
-        } else {
-            self.output_file.clone()
-        };
-        fs::write(&output_markdown, buf)?;
-        println!("Written to {}", output_markdown);
+        fs::write(file_markdown, buf)?;
+        println!("Written to {}", file_markdown.display());
         Ok(())
     }
 

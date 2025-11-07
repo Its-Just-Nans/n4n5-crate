@@ -1,6 +1,9 @@
 //! Utils functions
 
-use std::{fmt::Write, path::Path};
+use std::{
+    fmt::Write,
+    path::{Path, PathBuf},
+};
 
 use serde::Serialize;
 use std::fs::write;
@@ -8,11 +11,7 @@ use std::fs::write;
 /// Write date to a file, with pretty json
 /// # Errors
 /// Fails if serialize fails or write fails
-pub fn serde_pretty_print<T>(
-    data: T,
-    path_file: &Path,
-    print_json: bool,
-) -> Result<(), std::io::Error>
+pub fn pretty_print<T>(data: T, path_file: &Path) -> Result<(), std::io::Error>
 where
     T: Serialize,
 {
@@ -20,10 +19,11 @@ where
     let mut buf = Vec::new();
     let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
     data.serialize(&mut ser)?;
-    if print_json {
+    if path_file == PathBuf::from("-") {
         println!("{}", String::from_utf8_lossy(&buf));
+    } else {
+        write(path_file, buf)?;
     }
-    write(path_file, buf)?;
     Ok(())
 }
 
