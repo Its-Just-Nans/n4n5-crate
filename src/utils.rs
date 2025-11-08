@@ -19,7 +19,7 @@ where
     let mut buf = Vec::new();
     let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
     data.serialize(&mut ser)?;
-    if path_file == PathBuf::from("-") {
+    if path_file == "-" {
         println!("{}", String::from_utf8_lossy(&buf));
     } else {
         write(path_file, buf)?;
