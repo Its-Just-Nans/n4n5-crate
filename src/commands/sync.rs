@@ -194,14 +194,13 @@ impl SyncCliCommand {
         if !config.use_input {
             return Ok(());
         }
-        if let Some(sync) = &config.config_data.sync {
-            if let Some(programs) = &sync.programs {
-                if programs.path_cargo_programs.is_none() {
-                    println!("No cargo programs path found, do you want to add one? (y/n)");
-                    if input_no() {
-                        return Ok(());
-                    }
-                }
+        if let Some(sync) = &config.config_data.sync
+            && let Some(programs) = &sync.programs
+            && programs.path_cargo_programs.is_none()
+        {
+            println!("No cargo programs path found, do you want to add one? (y/n)");
+            if input_no() {
+                return Ok(());
             }
         }
         let cargo_path = config_sub_path!(
@@ -230,14 +229,13 @@ impl SyncCliCommand {
         if !config.use_input {
             return Ok(());
         }
-        if let Some(sync) = &config.config_data.sync {
-            if let Some(programs) = &sync.programs {
-                if programs.path_nix.is_none() {
-                    println!("No nix programs path found, do you want to add one? (y/n)");
-                    if input_no() {
-                        return Ok(());
-                    }
-                }
+        if let Some(sync) = &config.config_data.sync
+            && let Some(programs) = &sync.programs
+            && programs.path_nix.is_none()
+        {
+            println!("No nix programs path found, do you want to add one? (y/n)");
+            if input_no() {
+                return Ok(());
             }
         }
         let nix_path = config_sub_path!(
@@ -266,14 +264,13 @@ impl SyncCliCommand {
         if !config.use_input {
             return Ok(());
         }
-        if let Some(sync) = &config.config_data.sync {
-            if let Some(programs) = &sync.programs {
-                if programs.path_vscode_extensions.is_none() {
-                    println!("No vscode extensions path found, do you want to add one? (y/n)");
-                    if input_no() {
-                        return Ok(());
-                    }
-                }
+        if let Some(sync) = &config.config_data.sync
+            && let Some(programs) = &sync.programs
+            && programs.path_vscode_extensions.is_none()
+        {
+            println!("No vscode extensions path found, do you want to add one? (y/n)");
+            if input_no() {
+                return Ok(());
             }
         }
         let vscode_path = config_sub_path!(
