@@ -242,11 +242,13 @@ impl UtilsListCrates {
         });
         let tables = self.generate_markdown_table(rows)?;
         let mut buf = String::new();
-        writeln!(
-            &mut buf,
-            "# crates\n\n- <https://crates.io/users/{}>\n\n## Crates\n",
-            self.username
-        )?;
+        writeln!(&mut buf, "# crates")?;
+        writeln!(&mut buf)?;
+        writeln!(&mut buf, "- <https://crates.io/users/{}>", self.username)?;
+        writeln!(&mut buf, "- <https://lib.rs/~{}/dash>", self.username)?;
+        writeln!(&mut buf)?;
+        writeln!(&mut buf, "## Crates")?;
+        writeln!(&mut buf)?;
         write!(&mut buf, "{}", tables)?;
 
         if file_markdown == &PathBuf::from("-") {
