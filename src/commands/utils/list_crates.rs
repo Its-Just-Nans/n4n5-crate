@@ -47,8 +47,8 @@ pub struct UtilsListCrates {
     delay: f64,
 
     /// Filter crates
-    #[arg(long, default_value_t = false)]
-    filtered: bool,
+    #[arg(long)]
+    filtered: Option<String>,
 
     /// Filter crates
     #[arg(long, default_value_t = false)]
@@ -137,12 +137,12 @@ impl UtilsListCrates {
         .to_vec()];
         let (mut table1, mut table2, mut table3) = (Vec::new(), Vec::new(), Vec::new());
 
-        if self.filtered {
+        if let Some(pattern) = &self.filtered {
             for row in rows {
                 let to_push = row[1..].to_vec();
                 if specials_crates.contains(&row[0]) {
                     table3.push(to_push)
-                } else if row[2].to_lowercase().starts_with("incoming") {
+                } else if row[2].to_lowercase().starts_with(&pattern.to_lowercase()) {
                     table2.push(to_push);
                 } else {
                     table1.push(to_push);
@@ -156,7 +156,15 @@ impl UtilsListCrates {
         let table1_markdown = table_to_markdown_table(table1, 3)?;
         write!(&mut buf, "{}", table1_markdown)?;
         if !table2.is_empty() {
-            writeln!(&mut buf, "\n## Incoming\n")?;
+            if let Some(pattern) = &self.filtered {
+                let mut patt = pattern.clone();
+                if let Some(r) = patt.get_mut(0..1) {
+                    r.make_ascii_uppercase();
+                }
+                writeln!(&mut buf, "\n## {patt}\n")?;
+            } else {
+                writeln!(&mut buf, "\n## Filtered\n")?;
+            }
             let table2 = header.clone().into_iter().chain(table2);
             let table2_markdown = table_to_markdown_table(table2, 3)?;
             write!(&mut buf, "{}", table2_markdown)?;
