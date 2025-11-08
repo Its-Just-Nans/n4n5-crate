@@ -1,9 +1,6 @@
 //! Utils functions
 
-use std::{
-    fmt::Write,
-    path::{Path, PathBuf},
-};
+use std::{fmt::Write, path::Path};
 
 use serde::Serialize;
 use std::fs::write;
