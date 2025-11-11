@@ -101,8 +101,10 @@ impl MusicCliCommand {
                 .format_target(false)
                 .format_timestamp(None)
                 .init();
-            music_exporter::cli_main(music_file, Some(env_path), &platforms).await
-        });
+            music_exporter::music_exporter_main(music_file, Some(env_path), &platforms)
+                .await
+                .map_err(|e| GeneralError::new(format!("music-exporter: {e}")))
+        })?;
         Ok(())
     }
 }
