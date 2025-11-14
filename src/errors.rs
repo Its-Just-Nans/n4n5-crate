@@ -15,7 +15,8 @@ pub struct GeneralError {
 
 impl GeneralError {
     /// Create a new GeneralError instance
-    pub fn new(message: String) -> GeneralError {
+    pub fn new<S: AsRef<str>>(msg: S) -> GeneralError {
+        let message = msg.as_ref().to_string();
         GeneralError {
             message,
             from: None,
@@ -45,21 +46,21 @@ impl std::fmt::Display for GeneralError {
 }
 
 impl From<std::io::Error> for GeneralError {
-    fn from(error: std::io::Error) -> Self {
-        GeneralError::new_with_source("IO Error".to_string(), error.into())
+    fn from(value: std::io::Error) -> Self {
+        GeneralError::new_with_source(value.to_string(), value.into())
     }
 }
 
 impl From<String> for GeneralError {
-    fn from(error: String) -> Self {
-        GeneralError::new_with_source("Error:".to_string(), error.into())
+    fn from(value: String) -> Self {
+        GeneralError::new(value)
     }
 }
 
 // serde_json::Error is a type alias for serde_json::error::Error
 impl From<serde_json::Error> for GeneralError {
-    fn from(error: serde_json::Error) -> Self {
-        GeneralError::new_with_source("Serde JSON Error".to_string(), error.into())
+    fn from(value: serde_json::Error) -> Self {
+        GeneralError::new_with_source(value.to_string(), value.into())
     }
 }
 
@@ -77,24 +78,24 @@ impl From<ParseFloatError> for GeneralError {
 
 impl From<FromUtf8Error> for GeneralError {
     fn from(value: FromUtf8Error) -> Self {
-        GeneralError::new_with_source("FromUtf8Error".to_string(), value.into())
+        GeneralError::new_with_source(value.to_string(), value.into())
     }
 }
 
 impl From<toml::ser::Error> for GeneralError {
     fn from(value: toml::ser::Error) -> Self {
-        GeneralError::new_with_source("Toml Ser Error".to_string(), value.into())
+        GeneralError::new_with_source(value.to_string(), value.into())
     }
 }
 
 impl From<reqwest::Error> for GeneralError {
     fn from(value: reqwest::Error) -> Self {
-        GeneralError::new_with_source("reqwest Error".to_string(), value.into())
+        GeneralError::new_with_source(value.to_string(), value.into())
     }
 }
 
 impl From<std::fmt::Error> for GeneralError {
     fn from(value: std::fmt::Error) -> Self {
-        GeneralError::new_with_source("fmt error".to_string(), value.into())
+        GeneralError::new_with_source(value.to_string(), value.into())
     }
 }

@@ -150,7 +150,7 @@ pub fn input_path() -> Result<(PathBuf, String), GeneralError> {
     let mut path = PathBuf::from(&s);
     loop {
         if s == "\\" {
-            return Err(GeneralError::new("no path".to_string()));
+            return Err(GeneralError::new("no path"));
         }
         if path.exists() {
             break;

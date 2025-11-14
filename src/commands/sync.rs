@@ -110,12 +110,11 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the home directory cannot be found
     fn get_home_path() -> Result<(PathBuf, String), GeneralError> {
-        let path_buf = home::home_dir()
-            .ok_or_else(|| GeneralError::new("Cannot find home directory".to_string()))?;
+        let path_buf = home::home_dir().ok_or(GeneralError::new("Cannot find home directory"))?;
         let path = path_buf.clone();
-        let path = path.to_str().ok_or_else(|| {
-            GeneralError::new("Cannot convert home directory to string".to_string())
-        })?;
+        let path = path
+            .to_str()
+            .ok_or(GeneralError::new("Cannot convert home directory to string"))?;
         Ok((path_buf, path.to_string()))
     }
 

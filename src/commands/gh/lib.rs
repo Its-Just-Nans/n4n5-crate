@@ -259,11 +259,7 @@ impl Gh {
                         response_data = serde_json::from_value(
                             projects
                                 .get("pageInfo")
-                                .ok_or_else(|| {
-                                    GeneralError::new(
-                                        "Unable to find pageInfo in gh command".to_owned(),
-                                    )
-                                })?
+                                .ok_or(GeneralError::new("Unable to find pageInfo in gh command"))?
                                 .clone(),
                         )?;
                     }

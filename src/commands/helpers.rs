@@ -5,15 +5,14 @@
 //! ```
 //!
 
-use std::{fs::create_dir_all, path::Path};
-
 use clap::{CommandFactory, Subcommand};
-
 use clap_complete::{
     generate_to,
     shells::{Bash, Elvish, Fish, PowerShell, Zsh},
 };
 use clap_mangen::generate_to as man_generate_to;
+use home::home_dir;
+use std::fs::create_dir_all;
 
 use crate::{cli::CliArgs, config::Config, errors::GeneralError};
 
@@ -42,15 +41,15 @@ impl HelpersSubcommand {
     pub fn gen_completions(_config: &mut Config) -> Result<(), GeneralError> {
         let mut cmd = CliArgs::command();
         let app_name = env!("CARGO_CRATE_NAME");
-        let outdir = Path::new("completions");
+        let outdir = home_dir().ok_or(GeneralError::new("Cannot get home dir"))?;
+        let outdir = outdir.join(".config").join(".n4n5").join("completions");
 
-        create_dir_all(outdir)?;
-
-        generate_to(Bash, &mut cmd, app_name, outdir)?;
-        generate_to(Zsh, &mut cmd, app_name, outdir)?;
-        generate_to(Fish, &mut cmd, app_name, outdir)?;
-        generate_to(PowerShell, &mut cmd, app_name, outdir)?;
-        generate_to(Elvish, &mut cmd, app_name, outdir)?;
+        create_dir_all(&outdir)?;
+        generate_to(Bash, &mut cmd, app_name, &outdir)?;
+        generate_to(Zsh, &mut cmd, app_name, &outdir)?;
+        generate_to(Fish, &mut cmd, app_name, &outdir)?;
+        generate_to(PowerShell, &mut cmd, app_name, &outdir)?;
+        generate_to(Elvish, &mut cmd, app_name, &outdir)?;
 
         Ok(())
     }
@@ -60,8 +59,9 @@ impl HelpersSubcommand {
     /// Fails if error
     pub fn gen_man(_config: &mut Config) -> Result<(), GeneralError> {
         let cmd = CliArgs::command();
-        let outdir = Path::new("man");
-        create_dir_all(outdir)?;
+        let outdir = home_dir().ok_or(GeneralError::new("Cannot get home dir"))?;
+        let outdir = outdir.join(".config").join(".n4n5").join("man");
+        create_dir_all(&outdir)?;
 
         man_generate_to(cmd, outdir)?;
         Ok(())
