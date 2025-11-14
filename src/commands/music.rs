@@ -7,7 +7,7 @@
 use std::{path::PathBuf, process::Command};
 
 use clap::{ArgAction, Subcommand};
-use music_exporter::PlatformType;
+use music_exporter::{MusicExporter, PlatformType};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 
@@ -101,7 +101,8 @@ impl MusicCliCommand {
                 .format_target(false)
                 .format_timestamp(None)
                 .init();
-            music_exporter::music_exporter_main(music_file, Some(env_path), &platforms)
+            MusicExporter::new_from_vars(music_file, Some(env_path), &platforms)
+                .run_main()
                 .await
                 .map_err(|e| GeneralError::new(format!("music-exporter: {e}")))
         })?;
