@@ -94,7 +94,7 @@ impl SyncSubcommand {
     pub fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
         match self {
             Self::All => SyncCliCommand::sync_all(config),
-            Self::Music => MusicCliCommand::sync_music(config),
+            Self::Music => MusicCliCommand::sync_music(config, Some(true)),
             Self::Movies { print_json } => Movies::sync_movies(config, print_json),
             Self::Programs => SyncCliCommand::sync_programs(config),
             Self::Settings(settings) => match settings.action {
@@ -196,12 +196,11 @@ impl SyncCliCommand {
         if let Some(sync) = &config.config_data.sync
             && let Some(programs) = &sync.programs
             && programs.path_cargo_programs.is_none()
+            && input_no("No cargo programs path found, do you want to add one?")?
         {
-            println!("No cargo programs path found, do you want to add one? (y/n)");
-            if input_no() {
-                return Ok(());
-            }
+            return Ok(());
         }
+
         let cargo_path = config_sub_path!(
             config,
             sync,
@@ -231,12 +230,11 @@ impl SyncCliCommand {
         if let Some(sync) = &config.config_data.sync
             && let Some(programs) = &sync.programs
             && programs.path_nix.is_none()
+            && input_no("No nix programs path found, do you want to add one?")?
         {
-            println!("No nix programs path found, do you want to add one? (y/n)");
-            if input_no() {
-                return Ok(());
-            }
+            return Ok(());
         }
+
         let nix_path = config_sub_path!(
             config,
             sync,
@@ -266,11 +264,9 @@ impl SyncCliCommand {
         if let Some(sync) = &config.config_data.sync
             && let Some(programs) = &sync.programs
             && programs.path_vscode_extensions.is_none()
+            && input_no("No vscode extensions path found, do you want to add one?")?
         {
-            println!("No vscode extensions path found, do you want to add one? (y/n)");
-            if input_no() {
-                return Ok(());
-            }
+            return Ok(());
         }
         let vscode_path = config_sub_path!(
             config,

@@ -1,4 +1,5 @@
 //! To see all subcommands, run:
+//!
 //! ```shell
 //! n4n5 music
 //! ```
@@ -11,7 +12,12 @@ use music_exporter::{MusicExporter, PlatformType};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 
-use crate::{cli::input_path, config::Config, config_path, errors::GeneralError};
+use crate::{
+    cli::{input_no, input_path},
+    config::Config,
+    config_path,
+    errors::GeneralError,
+};
 
 /// Movies configuration
 #[derive(Deserialize, Serialize, Default)]
@@ -42,7 +48,7 @@ impl MusicSubcommand {
     /// Error if error in subcommand
     pub fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
         match self {
-            MusicSubcommand::Sync => MusicCliCommand::sync_music(config),
+            MusicSubcommand::Sync => MusicCliCommand::sync_music(config, None),
             MusicSubcommand::Open { show_path_only } => {
                 MusicCliCommand::open_music_file(config, show_path_only)
             }
@@ -82,30 +88,58 @@ impl MusicCliCommand {
     /// Sync music
     /// # Errors
     /// Fails if the music file cannot be found
-    pub fn sync_music(config: &mut Config) -> Result<(), GeneralError> {
+    pub fn sync_music(config: &mut Config, sync_all: Option<bool>) -> Result<(), GeneralError> {
         let rt = Runtime::new()?;
 
         let music_file = MusicCliCommand::get_music_file_path(config)?;
         let env_path = config_path!(config, music, MusicCliCommand, env_path, "the env path");
 
         println!("music file: '{}'", music_file.display());
-        let platforms = vec![
-            PlatformType::Deezer,
-            PlatformType::Spotify,
-            PlatformType::Youtube,
-        ];
+        if let Some(true) = sync_all {
+            let platforms = vec![
+                PlatformType::Deezer,
+                PlatformType::Spotify,
+                PlatformType::Youtube,
+            ];
+            rt.block_on(async {
+                env_logger::builder()
+                    .filter_level(log::LevelFilter::Info)
+                    .format_target(false)
+                    .format_timestamp(None)
+                    .init();
+                MusicExporter::new_from_vars(music_file, Some(env_path), &platforms)
+                    .run_main()
+                    .await
+                    .map_err(|e| GeneralError::new(format!("music-exporter: {e}")))
+            })?;
+        } else {
+            for platform in [
+                PlatformType::Deezer,
+                PlatformType::Spotify,
+                PlatformType::Youtube,
+            ] {
+                if input_no(format!("Should we sync platform: {platform}?"))? {
+                    println!("Skipping platform: {platform}");
+                    continue;
+                }
+                rt.block_on(async {
+                    env_logger::builder()
+                        .filter_level(log::LevelFilter::Info)
+                        .format_target(false)
+                        .format_timestamp(None)
+                        .init();
+                    MusicExporter::new_from_vars(
+                        music_file.clone(),
+                        Some(env_path.clone()),
+                        &[platform],
+                    )
+                    .run_main()
+                    .await
+                    .map_err(|e| GeneralError::new(format!("music-exporter: {e}")))
+                })?;
+            }
+        };
 
-        rt.block_on(async {
-            env_logger::builder()
-                .filter_level(log::LevelFilter::Info)
-                .format_target(false)
-                .format_timestamp(None)
-                .init();
-            MusicExporter::new_from_vars(music_file, Some(env_path), &platforms)
-                .run_main()
-                .await
-                .map_err(|e| GeneralError::new(format!("music-exporter: {e}")))
-        })?;
         Ok(())
     }
 }

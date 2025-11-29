@@ -1,6 +1,7 @@
 //! The CLI module
 
-use std::path::PathBuf;
+use clap::{Parser, Subcommand};
+use std::{io::Write, path::PathBuf};
 
 use crate::{
     commands::{
@@ -11,7 +12,6 @@ use crate::{
     config::Config,
     errors::GeneralError,
 };
-use clap::{Parser, Subcommand};
 
 /// Example CLI using clap derive and subcommands
 #[derive(Parser, Debug)]
@@ -105,39 +105,48 @@ pub fn cli_main() -> Result<(), GeneralError> {
 }
 
 /// Get input from the user with a prompt
-pub fn get_input(text: &str) -> String {
+/// # Errors
+/// Returns a GeneralError if the input fails
+pub fn get_input(text: &str) -> Result<String, GeneralError> {
     println!("{text}");
     input()
 }
 
 /// Get input from the user
-/// # Panics
-/// Panics if the input is not a valid string
-pub fn input() -> String {
+/// # Errors
+/// Returns a GeneralError if the input fails
+pub fn input() -> Result<String, GeneralError> {
     use std::io::{Write, stdin, stdout};
     let mut s = String::new();
     let _ = stdout().flush();
     stdin()
         .read_line(&mut s)
-        .expect("Did not enter a correct string");
+        .map_err(|e| GeneralError::new(format!("Failed to read line from stdin:{}", e)))?;
     if let Some('\n') = s.chars().next_back() {
         s.pop();
     }
     if let Some('\r') = s.chars().next_back() {
         s.pop();
     }
-    s
+    Ok(s)
 }
 
 /// Get a yes input from the user
-pub fn input_yes() -> bool {
-    let s = input();
-    matches!(s.to_lowercase().as_str(), "y" | "yes")
+/// # Errors
+/// Returns a GeneralError if the input fails
+pub fn input_yes<S: AsRef<str>>(prompt: S) -> Result<bool, GeneralError> {
+    print!("{} (y/n):", prompt.as_ref());
+    std::io::stdout().flush()?;
+    let s = input()?;
+    Ok(matches!(s.to_lowercase().as_str(), "y" | "yes"))
 }
 
 /// Get a no input from the user
-pub fn input_no() -> bool {
-    !input_yes()
+/// # Errors
+/// Returns a GeneralError if the input fails
+pub fn input_no<S: AsRef<str>>(prompt: S) -> Result<bool, GeneralError> {
+    let input_y = input_yes(prompt)?;
+    Ok(!input_y)
 }
 
 /// Get a valid path from the user
@@ -146,7 +155,7 @@ pub fn input_no() -> bool {
 /// # Errors
 /// Returns a GeneralError if the path does not exist
 pub fn input_path() -> Result<(PathBuf, String), GeneralError> {
-    let mut s = input();
+    let mut s = input()?;
     let mut path = PathBuf::from(&s);
     loop {
         if s == "\\" {
@@ -156,7 +165,7 @@ pub fn input_path() -> Result<(PathBuf, String), GeneralError> {
             break;
         }
         println!("Path does not exist. Please enter a valid path:");
-        s = input();
+        s = input()?;
         path = PathBuf::from(&s);
     }
     Ok((

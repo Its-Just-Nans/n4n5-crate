@@ -176,12 +176,12 @@ impl Movies {
     /// Returns an error if unable to read the movies file
     fn add_movie(config: &mut Config) -> Result<(), GeneralError> {
         let file_path = Movies::get_movie_path(config)?;
-        let title = get_input("Title");
-        let note = get_input("Note").parse()?;
-        let date = get_input("Date").parse()?;
-        let comment = get_input("Comment");
-        let seen = get_input("Seen");
-        let summary = get_input("Summary");
+        let title = get_input("Title")?;
+        let note = get_input("Note")?.parse()?;
+        let date = get_input("Date")?.parse()?;
+        let comment = get_input("Comment")?;
+        let seen = get_input("Seen")?;
+        let summary = get_input("Summary")?;
         let movie = OneMovie {
             title,
             note,
