@@ -9,10 +9,10 @@ use clap::{ArgAction, Subcommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli::{get_input, input_path},
     config::Config,
     config_path,
     errors::GeneralError,
+    utils::{get_input, input_path},
 };
 
 /// Movies configuration

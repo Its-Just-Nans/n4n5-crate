@@ -1,13 +1,18 @@
 //! The CLI module
 
-use clap::{Parser, Subcommand};
-use std::{io::Write, path::PathBuf};
+use clap::{CommandFactory, Parser, Subcommand};
+use clap_complete::{
+    generate_to,
+    shells::{Bash, Elvish, Fish, PowerShell, Zsh},
+};
+use clap_mangen::generate_to as man_generate_to;
+use home::home_dir;
+use std::{fs::create_dir_all, path::PathBuf};
 
 use crate::{
     commands::{
-        config::ConfigSubcommand, gh::lib::GhSubCommand, helpers::HelpersSubcommand,
-        movies::MoviesSubCommand, music::MusicSubcommand, sync::SyncSubcommand,
-        utils::lib::UtilsSubCommand,
+        config::ConfigSubcommand, gh::lib::GhSubCommand, movies::MoviesSubCommand,
+        music::MusicSubcommand, sync::SyncSubcommand, utils::lib::UtilsSubCommand,
     },
     config::Config,
     errors::GeneralError,
@@ -61,12 +66,6 @@ pub enum Commands {
         subcommand: GhSubCommand,
     },
 
-    /// helpers subcommand
-    Helpers {
-        /// list of subcommands
-        #[command(subcommand)]
-        subcommand: HelpersSubcommand,
-    },
     /// movies subcommand
     Movies {
         /// list of subcommands
@@ -80,6 +79,46 @@ pub enum Commands {
         #[command(subcommand)]
         subcommand: SyncSubcommand,
     },
+
+    /// generate completions
+    Completions,
+
+    /// generate man
+    Man,
+}
+
+impl Commands {
+    /// Get the music file path
+    /// # Errors
+    /// Fails if the file cannot be found
+    pub fn gen_completions(_config: &mut Config) -> Result<(), GeneralError> {
+        let mut cmd = CliArgs::command();
+        let app_name = env!("CARGO_CRATE_NAME");
+        let outdir = home_dir().ok_or(GeneralError::new("Cannot get home dir"))?;
+        let outdir = outdir.join(".config").join(".n4n5").join("completions");
+
+        create_dir_all(&outdir)?;
+        generate_to(Bash, &mut cmd, app_name, &outdir)?;
+        generate_to(Zsh, &mut cmd, app_name, &outdir)?;
+        generate_to(Fish, &mut cmd, app_name, &outdir)?;
+        generate_to(PowerShell, &mut cmd, app_name, &outdir)?;
+        generate_to(Elvish, &mut cmd, app_name, &outdir)?;
+
+        Ok(())
+    }
+
+    /// generate man page
+    /// # Errors
+    /// Fails if error
+    pub fn gen_man(_config: &mut Config) -> Result<(), GeneralError> {
+        let cmd = CliArgs::command();
+        let outdir = home_dir().ok_or(GeneralError::new("Cannot get home dir"))?;
+        let outdir = outdir.join(".config").join(".n4n5").join("man");
+        create_dir_all(&outdir)?;
+
+        man_generate_to(cmd, outdir)?;
+        Ok(())
+    }
 }
 
 /// The CLI main function
@@ -98,80 +137,9 @@ pub fn cli_main() -> Result<(), GeneralError> {
         Commands::Music { subcommand } => subcommand.invoke(&mut config),
         Commands::Config { subcommand } => subcommand.invoke(&mut config),
         Commands::Gh { subcommand } => subcommand.invoke(&mut config),
-        Commands::Helpers { subcommand } => subcommand.invoke(&mut config),
         Commands::Movies { subcommand } => subcommand.invoke(&mut config),
         Commands::Sync { subcommand } => subcommand.invoke(&mut config),
+        Commands::Completions => Commands::gen_completions(&mut config),
+        Commands::Man => Commands::gen_man(&mut config),
     }
-}
-
-/// Get input from the user with a prompt
-/// # Errors
-/// Returns a GeneralError if the input fails
-pub fn get_input(text: &str) -> Result<String, GeneralError> {
-    println!("{text}");
-    input()
-}
-
-/// Get input from the user
-/// # Errors
-/// Returns a GeneralError if the input fails
-pub fn input() -> Result<String, GeneralError> {
-    use std::io::{Write, stdin, stdout};
-    let mut s = String::new();
-    let _ = stdout().flush();
-    stdin()
-        .read_line(&mut s)
-        .map_err(|e| GeneralError::new(format!("Failed to read line from stdin:{}", e)))?;
-    if let Some('\n') = s.chars().next_back() {
-        s.pop();
-    }
-    if let Some('\r') = s.chars().next_back() {
-        s.pop();
-    }
-    Ok(s)
-}
-
-/// Get a yes input from the user
-/// # Errors
-/// Returns a GeneralError if the input fails
-pub fn input_yes<S: AsRef<str>>(prompt: S) -> Result<bool, GeneralError> {
-    print!("{} (y/n):", prompt.as_ref());
-    std::io::stdout().flush()?;
-    let s = input()?;
-    Ok(matches!(s.to_lowercase().as_str(), "y" | "yes"))
-}
-
-/// Get a no input from the user
-/// # Errors
-/// Returns a GeneralError if the input fails
-pub fn input_no<S: AsRef<str>>(prompt: S) -> Result<bool, GeneralError> {
-    let input_y = input_yes(prompt)?;
-    Ok(!input_y)
-}
-
-/// Get a valid path from the user
-/// # Panics
-/// Panics if the path is not valid
-/// # Errors
-/// Returns a GeneralError if the path does not exist
-pub fn input_path() -> Result<(PathBuf, String), GeneralError> {
-    let mut s = input()?;
-    let mut path = PathBuf::from(&s);
-    loop {
-        if s == "\\" {
-            return Err(GeneralError::new("no path"));
-        }
-        if path.exists() {
-            break;
-        }
-        println!("Path does not exist. Please enter a valid path:");
-        s = input()?;
-        path = PathBuf::from(&s);
-    }
-    Ok((
-        path.clone(),
-        path.to_str()
-            .expect("Cannot convert path to string")
-            .to_string(),
-    ))
 }

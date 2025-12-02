@@ -9,8 +9,8 @@ use serde_json::Value;
 use std::{collections::BTreeMap, fs::write, path::PathBuf, process::Command};
 
 use crate::{
-    cli::input_path, commands::gh::types::GhProject, config::Config, config_path,
-    errors::GeneralError, utils::pretty_print,
+    commands::gh::types::GhProject, config::Config, config_path, errors::GeneralError,
+    utils::input_path, utils::pretty_print,
 };
 
 use super::types::{GhPageInfo, GhResponse};

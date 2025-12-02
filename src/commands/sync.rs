@@ -14,11 +14,11 @@ use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli::{input_no, input_path},
     commands::gh::lib::Gh,
     config::Config,
     config_path, config_sub_path,
     errors::GeneralError,
+    utils::{input_no, input_path},
 };
 
 use super::{movies::Movies, music::MusicCliCommand};

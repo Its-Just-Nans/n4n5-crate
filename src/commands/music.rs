@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 
 use crate::{
-    cli::{input_no, input_path},
     config::Config,
     config_path,
     errors::GeneralError,
+    utils::{input_no, input_path},
 };
 
 /// Movies configuration
