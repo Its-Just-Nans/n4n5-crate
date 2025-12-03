@@ -108,7 +108,7 @@ impl Config {
         };
         let config_directory = home_dir.join(".config").join(".n4n5");
         let config_path = config_directory.join("config.toml");
-        create_dir_all(config_directory).map_err(|e| format!("Unable to create config dir {e}"));
+        create_dir_all(config_directory).map_err(|e| format!("Unable to create config dir {e}"))?;
         if !config_path.exists() {
             let mut file = File::create(&config_path)
                 .map_err(|e| format!("Unable to create config file {e}"))?;
