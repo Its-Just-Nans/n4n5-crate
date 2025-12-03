@@ -50,30 +50,24 @@ pub struct ConfigData {
 
 impl Config {
     /// Parse the config file
-    fn parse_config(str_config: &str, path_config: PathBuf) -> Self {
-        Config {
+    /// # Errors
+    /// Error if toml parse fails
+    fn parse_config(str_config: &str, path_config: PathBuf) -> Result<Self, GeneralError> {
+        let config_data = toml::from_str(str_config)?;
+        Ok(Config {
             debug: 0,
             use_input: true,
             config_path: path_config,
-            config_data: match toml::from_str(str_config) {
-                Ok(config) => config,
-                Err(e) => {
-                    eprintln!("Unable to parse config file: {e}");
-                    eprintln!("Using default config");
-                    ConfigData::default()
-                }
-            },
-        }
+            config_data,
+        })
     }
 
     /// Create a new Config object from the default path
-    /// # Panics
-    /// Panics if the file can't be opened
-    pub fn new() -> Self {
-        let config_path = Config::get_config_path();
-        let contents = read_to_string(config_path.clone())
-            .unwrap_or_else(|_| panic!("Unable to open '{}'", config_path.display()));
-        Config::parse_config(&contents, config_path)
+    /// # Errors
+    /// Error if the file can't be opened
+    pub fn try_new() -> Result<Self, GeneralError> {
+        let config_path = Config::get_config_path()?;
+        Self::try_new_from_path(config_path)
     }
 
     /// Save the config data to the config file
@@ -89,9 +83,10 @@ impl Config {
     /// Create a new Config object from a custom path
     /// # Errors
     /// Returns an error if the file can't be opened
-    pub fn new_from_path(custom_path: PathBuf) -> Result<Self, GeneralError> {
-        let contents = read_to_string(custom_path.clone())?;
-        Ok(Config::parse_config(&contents, custom_path))
+    pub fn try_new_from_path(custom_path: PathBuf) -> Result<Self, GeneralError> {
+        let contents = read_to_string(custom_path.clone())
+            .map_err(|e| format!("Unable to open '{}': {e}", custom_path.display()))?;
+        Config::parse_config(&contents, custom_path)
     }
 
     /// Set the debug value
@@ -100,22 +95,27 @@ impl Config {
     }
 
     /// Get the path to the config file
-    /// # Panics
-    /// Panics if the home directory can't be found
-    pub fn get_config_path() -> PathBuf {
+    /// # Errors
+    /// Error if the home directory can't be found
+    pub fn get_config_path() -> Result<PathBuf, GeneralError> {
         let home_dir = match home_dir() {
-            Some(path) if !path.as_os_str().is_empty() => Ok(path),
-            _ => Err(()),
-        }
-        .expect("Unable to get your home dir! home::home_dir() isn't working");
+            Some(path) if !path.as_os_str().is_empty() => path,
+            _ => {
+                return Err(GeneralError::new(
+                    "Unable to get your home dir! home::home_dir() isn't working",
+                ));
+            }
+        };
         let config_directory = home_dir.join(".config").join(".n4n5");
         let config_path = config_directory.join("config.toml");
-        create_dir_all(config_directory).expect("Unable to create config dir");
+        create_dir_all(config_directory).map_err(|e| format!("Unable to create config dir {e}"));
         if !config_path.exists() {
-            let mut file = File::create(&config_path).expect("Unable to create config file");
-            file.write_all(b"").expect("Unable to write to config file");
+            let mut file = File::create(&config_path)
+                .map_err(|e| format!("Unable to create config file {e}"))?;
+            file.write_all(b"")
+                .map_err(|e| format!("Unable to write to config file: {e}"))?;
         }
-        config_path
+        Ok(config_path)
     }
 
     /// Update the config data and save it to the config file

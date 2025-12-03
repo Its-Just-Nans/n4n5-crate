@@ -128,8 +128,8 @@ impl Commands {
 pub fn cli_main() -> Result<(), GeneralError> {
     let cli = CliArgs::parse();
     let mut config = match cli.config {
-        Some(config_path) => Config::new_from_path(config_path.clone())?,
-        None => Config::new(),
+        Some(config_path) => Config::try_new_from_path(config_path.clone())?,
+        None => Config::try_new()?,
     };
     config.set_debug(cli.debug);
     match cli.command {

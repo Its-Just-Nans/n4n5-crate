@@ -99,3 +99,9 @@ impl From<std::fmt::Error> for GeneralError {
         GeneralError::new_with_source(value.to_string(), value.into())
     }
 }
+
+impl From<toml::de::Error> for GeneralError {
+    fn from(value: toml::de::Error) -> Self {
+        GeneralError::new_with_source(value.to_string(), value.into())
+    }
+}
