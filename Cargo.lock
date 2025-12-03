@@ -1060,7 +1060,7 @@ dependencies = [
 
 [[package]]
 name = "n4n5"
-version = "1.4.0"
+version = "1.4.1"
 dependencies = [
  "clap",
  "clap_complete",
