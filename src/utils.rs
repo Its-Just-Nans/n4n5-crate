@@ -82,7 +82,7 @@ pub fn input() -> Result<String, GeneralError> {
     let _ = stdout().flush();
     stdin()
         .read_line(&mut s)
-        .map_err(|e| GeneralError::new(format!("Failed to read line from stdin:{}", e)))?;
+        .map_err(|e| ("Failed to read line from stdin", e))?;
     if let Some('\n') = s.chars().next_back() {
         s.pop();
     }

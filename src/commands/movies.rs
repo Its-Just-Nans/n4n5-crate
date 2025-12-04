@@ -107,7 +107,7 @@ impl OneMovie {
 }
 
 /// Movies sub command
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum MoviesSubCommand {
     /// add a movie
     Add,
@@ -217,7 +217,7 @@ impl Movies {
     /// Returns an error if unable to read the movies file
     pub fn get_all_movies(config: &mut Config) -> Result<AllMovies, GeneralError> {
         let file_path = Movies::get_movie_path(config)?;
-        if config.debug > 0 {
+        if config.cli_args.debug > 0 {
             println!("Reading movies file at {}", file_path.display());
         }
         if !file_path.exists() {
@@ -326,7 +326,7 @@ impl Movies {
     /// # Errors
     /// Returns an error if unable to read the movies file
     pub fn sync_movies(config: &mut Config, print_json: bool) -> Result<(), GeneralError> {
-        if config.debug > 1 {
+        if config.cli_args.debug > 1 {
             println!("Syncing movies");
         }
         let movies = Movies::get_all_movies(config)?;

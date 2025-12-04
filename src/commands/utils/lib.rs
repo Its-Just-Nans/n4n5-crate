@@ -9,7 +9,7 @@ use clap::Subcommand;
 use crate::{commands::utils::list_crates::UtilsListCrates, config::Config, errors::GeneralError};
 
 /// Movies configuration
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum UtilsSubCommand {
     /// list_crates subcommand
     #[command(name = "list_crates")]
@@ -19,6 +19,11 @@ pub enum UtilsSubCommand {
     #[cfg(feature = "pngtools")]
     #[command(name = "pngtools")]
     PngTools,
+
+    /// Launch git-mover cli
+    #[cfg(feature = "git-mover")]
+    #[command(name = "git-mover")]
+    GitMover,
 }
 
 impl UtilsSubCommand {
@@ -30,6 +35,8 @@ impl UtilsSubCommand {
             UtilsSubCommand::ListCrates(subcommand) => subcommand.list_crates(config),
             #[cfg(feature = "pngtools")]
             UtilsSubCommand::PngTools => self.pngtools(),
+            #[cfg(feature = "git-mover")]
+            UtilsSubCommand::GitMover => self.git_mover(),
         }
     }
 
@@ -38,13 +45,26 @@ impl UtilsSubCommand {
     /// Fails if pngtools fails
     #[cfg(feature = "pngtools")]
     pub fn pngtools(&self) -> Result<(), GeneralError> {
-        use std::sync::Arc;
-        pngtools::run_cli().map_err(|e| {
-            GeneralError::new_with_source(
-                format!("Error with pngtools: {e}"),
-                Box::new(Arc::new(e)),
-            )
-        })?;
+        pngtools::run_cli().map_err(|e| ("Error with pngtools", e))?;
+        Ok(())
+    }
+
+    /// Run git-mover cli
+    /// # Errors
+    /// Fails if git-mover fails
+    #[cfg(feature = "git-mover")]
+    pub fn git_mover(&self) -> Result<(), GeneralError> {
+        use tokio::runtime::Runtime;
+
+        let rt = Runtime::new()?;
+        rt.block_on(async {
+            env_logger::builder()
+                .filter_level(log::LevelFilter::Info)
+                .format_target(false)
+                .format_timestamp(None)
+                .init();
+            git_mover::cli_main().await; //.map_err(|e| ("Error with git-mover", e))?;
+        });
         Ok(())
     }
 }

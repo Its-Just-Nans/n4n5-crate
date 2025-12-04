@@ -36,7 +36,7 @@ pub struct Gh {
     pub file_projects_disk: Option<String>,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum GhSubCommand {
     /// Save pulls
     Pulls {
@@ -138,13 +138,13 @@ impl Gh {
         }
     }'"
             .replace("100)", format!("100{add})",).as_str());
-            if config.debug > 0 {
+            if config.cli_args.debug > 0 {
                 println!("Running command:");
                 println!("{command}");
             }
             let output = Command::new("sh").arg("-c").arg(command).output()?;
             let output = String::from_utf8_lossy(&output.stdout).to_string();
-            if config.debug > 1 {
+            if config.cli_args.debug > 1 {
                 println!("Output:");
                 println!("{output}");
             }
@@ -283,7 +283,7 @@ impl Gh {
         }
         let debug_level = match print_json {
             true => 0,
-            false => config.debug + 1,
+            false => config.cli_args.debug + 1,
         };
         let mut repos = Gh::fetch_projects(ProjectType::Repos, debug_level)?;
         repos.sort_by(|a, b| a.name.cmp(&b.name));

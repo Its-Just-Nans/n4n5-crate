@@ -28,7 +28,9 @@ clap_mangen = "0.2"
 reqwest = { version = "0.12.24", features = ["blocking"] }
 pngtools = { version = "1.1.0", optional = true }
 galion = "0.1.0"
+git-mover = { version = "1.1.7", optional = true }
 
 [features]
-default = ["pngtools"]
+default = ["pngtools", "git-mover"]
 pngtools = ["dep:pngtools"]
+git-mover = ["dep:git-mover"]

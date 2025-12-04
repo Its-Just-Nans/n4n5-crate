@@ -1,42 +1,46 @@
 //! The CLI module
 
-use clap::{CommandFactory, Parser, Subcommand};
+use clap::{ArgAction, CommandFactory, Parser, Subcommand};
 use clap_complete::{
     generate_to,
     shells::{Bash, Elvish, Fish, PowerShell, Zsh},
 };
 use clap_mangen::generate_to as man_generate_to;
 use home::home_dir;
-use std::{fs::create_dir_all, path::PathBuf};
+use std::{fs::create_dir_all, path::PathBuf, process::Command};
 
 use crate::{
     commands::{
-        config::ConfigSubcommand, gh::lib::GhSubCommand, movies::MoviesSubCommand,
-        music::MusicSubcommand, sync::SyncSubcommand, utils::lib::UtilsSubCommand,
+        gh::lib::GhSubCommand, movies::MoviesSubCommand, music::MusicSubcommand,
+        sync::SyncSubcommand, utils::lib::UtilsSubCommand,
     },
     config::Config,
     errors::GeneralError,
 };
 
 /// Example CLI using clap derive and subcommands
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(name = "n4n5")]
 #[command(about = "n4n5 CLI", long_about = None)]
 pub struct CliArgs {
     /// Sets a custom config file
-    #[arg(short, long, value_name = "FILE")]
+    #[arg(long, value_name = "FILE")]
     pub config: Option<PathBuf>,
 
     /// Turn debugging information on
     #[arg(short, long, action = clap::ArgAction::Count)]
     pub debug: u8,
 
+    /// whether to use input for configuration
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    pub use_input: bool,
+
     /// Subcommands
     #[command(subcommand)]
     pub command: Commands,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum Commands {
     /// utils subcommand
     Utils {
@@ -121,21 +125,48 @@ impl Commands {
     }
 }
 
+/// Config subcommand
+#[derive(Subcommand, Debug, Clone)]
+pub enum ConfigSubcommand {
+    /// Open config with default editor
+    Open {
+        /// Print the path
+        #[arg(short = 'p', long = "path", action = ArgAction::SetTrue)]
+        show_path_only: bool,
+    },
+}
+
+impl ConfigSubcommand {
+    /// Open the config file with the default editor
+    /// # Errors
+    /// Return an error if the editor fails to open
+    fn open(config: &mut Config, print_path: bool) -> Result<(), GeneralError> {
+        let config_path = &config.config_path;
+        if print_path {
+            println!("{}", config_path.display());
+            return Ok(());
+        }
+        println!("Opening config {}", config_path.display());
+        Command::new("vi").arg(config_path).spawn()?.wait()?;
+        Ok(())
+    }
+}
+
 /// The CLI main function
 /// Handle all arguments and invoke the correct command
 /// # Errors
 /// Returns a GeneralError if the command fails
 pub fn cli_main() -> Result<(), GeneralError> {
-    let cli = CliArgs::parse();
-    let mut config = match cli.config {
-        Some(config_path) => Config::try_new_from_path(config_path.clone())?,
-        None => Config::try_new()?,
-    };
-    config.set_debug(cli.debug);
-    match cli.command {
+    let cli_args = CliArgs::parse();
+    let mut config = Config::try_new(cli_args.clone())?;
+    match cli_args.command {
         Commands::Utils { subcommand } => subcommand.invoke(&mut config),
         Commands::Music { subcommand } => subcommand.invoke(&mut config),
-        Commands::Config { subcommand } => subcommand.invoke(&mut config),
+        Commands::Config { subcommand } => match subcommand {
+            ConfigSubcommand::Open { show_path_only } => {
+                ConfigSubcommand::open(&mut config, show_path_only)
+            }
+        },
         Commands::Gh { subcommand } => subcommand.invoke(&mut config),
         Commands::Movies { subcommand } => subcommand.invoke(&mut config),
         Commands::Sync { subcommand } => subcommand.invoke(&mut config),

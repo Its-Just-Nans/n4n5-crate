@@ -29,7 +29,7 @@ pub struct MusicCliCommand {
     pub env_path: Option<String>,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum MusicSubcommand {
     /// Save music
     Sync,
@@ -110,7 +110,7 @@ impl MusicCliCommand {
                 MusicExporter::new_from_vars(music_file, Some(env_path), &platforms)
                     .run_main()
                     .await
-                    .map_err(|e| GeneralError::new(format!("music-exporter: {e}")))
+                    .map_err(|e| ("Error with music-exporter", e))
             })?;
         } else {
             for platform in [
@@ -135,7 +135,7 @@ impl MusicCliCommand {
                     )
                     .run_main()
                     .await
-                    .map_err(|e| GeneralError::new(format!("music-exporter: {e}")))
+                    .map_err(|e| ("Error with music-exporter", e))
                 })?;
             }
         };

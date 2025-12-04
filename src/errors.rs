@@ -105,3 +105,14 @@ impl From<toml::de::Error> for GeneralError {
         GeneralError::new_with_source(value.to_string(), value.into())
     }
 }
+
+impl<S, B> From<(S, B)> for GeneralError
+where
+    S: Into<String>,
+    B: std::error::Error + Send + Sync + 'static,
+{
+    fn from(value: (S, B)) -> Self {
+        // value.0 is the string, value.1 is the error
+        GeneralError::new_with_source(value.0.into(), Box::new(value.1))
+    }
+}

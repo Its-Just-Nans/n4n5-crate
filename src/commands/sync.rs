@@ -47,7 +47,7 @@ pub struct ProgramsConfig {
     pub path_nix: Option<String>,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum SyncSubcommand {
     /// save settings
     Settings(SettingsCommand),
@@ -70,7 +70,7 @@ pub enum SyncSubcommand {
 }
 
 /// settings subcommand
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(arg_required_else_help = true)]
 pub struct SettingsCommand {
     /// settings subcommand
@@ -78,7 +78,7 @@ pub struct SettingsCommand {
     pub action: SettingsAction,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum SettingsAction {
     /// add a file to save
     Add,
@@ -151,12 +151,17 @@ impl SyncCliCommand {
         );
         for file_path_to_save in files_path {
             let input_path = home_pathbuf.join(&file_path_to_save);
-            let mut file_input =
-                File::open(&input_path).map_err(|e| format!("{e} for {}", input_path.display()))?;
+            let mut file_input = File::open(&input_path)
+                .map_err(|e| (format!("Unable to open '{}'", input_path.display()), e))?;
             let save_path = folder_path.join(&file_path_to_save);
             println!("- '{}' to '{}'", input_path.display(), save_path.display());
             if let Some(parent) = save_path.parent() {
-                create_dir_all(parent).map_err(|e| format!("{e} for {}", parent.display()))?;
+                create_dir_all(parent).map_err(|e| {
+                    (
+                        format!("Unable to create parent dir for '{}'", parent.display()),
+                        e,
+                    )
+                })?;
             }
             let mut file = File::create(&save_path)?;
 
@@ -181,7 +186,6 @@ impl SyncCliCommand {
                     ..Default::default()
                 });
             }
-            config_data
         })?;
         Ok(())
     }
@@ -190,7 +194,7 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_cargo(config: &mut Config) -> Result<(), GeneralError> {
-        if !config.use_input {
+        if !config.cli_args.use_input {
             return Ok(());
         }
         if let Some(sync) = &config.config_data.sync
@@ -224,7 +228,7 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_nix(config: &mut Config) -> Result<(), GeneralError> {
-        if !config.use_input {
+        if !config.cli_args.use_input {
             return Ok(());
         }
         if let Some(sync) = &config.config_data.sync
@@ -258,7 +262,7 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_vscode(config: &mut Config) -> Result<(), GeneralError> {
-        if !config.use_input {
+        if !config.cli_args.use_input {
             return Ok(());
         }
         if let Some(sync) = &config.config_data.sync
@@ -302,8 +306,8 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if any of the subcommands fails
     fn sync_all(config: &mut Config) -> Result<(), GeneralError> {
-        config.use_input = false;
-        if config.debug > 1 {
+        config.cli_args.use_input = false;
+        if config.cli_args.debug > 1 {
             println!("Syncing all");
         }
         if config.config_data.movies.is_some() {
