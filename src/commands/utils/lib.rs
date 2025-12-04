@@ -22,8 +22,16 @@ pub enum UtilsSubCommand {
 
     /// Launch git-mover cli
     #[cfg(feature = "git-mover")]
-    #[command(name = "git-mover")]
-    GitMover,
+    #[command(
+        name = "git-mover",
+        trailing_var_arg = true,       // captures all remaining args
+        allow_hyphen_values = true     // allows unknown flags
+    )]
+    GitMover {
+        /// Accept many arguments
+        #[arg(num_args = 0..)]
+        args: Vec<String>,
+    },
 }
 
 impl UtilsSubCommand {
@@ -36,7 +44,7 @@ impl UtilsSubCommand {
             #[cfg(feature = "pngtools")]
             UtilsSubCommand::PngTools => self.pngtools(),
             #[cfg(feature = "git-mover")]
-            UtilsSubCommand::GitMover => self.git_mover(),
+            UtilsSubCommand::GitMover { ref args } => self.git_mover(args),
         }
     }
 
@@ -53,7 +61,9 @@ impl UtilsSubCommand {
     /// # Errors
     /// Fails if git-mover fails
     #[cfg(feature = "git-mover")]
-    pub fn git_mover(&self) -> Result<(), GeneralError> {
+    pub fn git_mover(&self, args: &[String]) -> Result<(), GeneralError> {
+        use clap::Parser;
+        use git_mover::GitMoverCli;
         use tokio::runtime::Runtime;
 
         let rt = Runtime::new()?;
@@ -63,8 +73,13 @@ impl UtilsSubCommand {
                 .format_target(false)
                 .format_timestamp(None)
                 .init();
-            git_mover::cli_main().await; //.map_err(|e| ("Error with git-mover", e))?;
-        });
+            let git_mover_inst = GitMoverCli::try_parse_from(args)
+                .map_err(|e| GeneralError::new_with_source("Error with git-mover", e))?;
+            git_mover_inst
+                .main()
+                .await
+                .map_err(|e| GeneralError::new_with_source("Error with git-mover", e))
+        })?;
         Ok(())
     }
 }

@@ -6,6 +6,7 @@ use std::{
 };
 
 /// General error type for the application
+#[derive(Debug)]
 pub struct GeneralError {
     /// Error message
     message: String,
@@ -15,25 +16,27 @@ pub struct GeneralError {
 
 impl GeneralError {
     /// Create a new GeneralError instance
-    pub fn new<S: AsRef<str>>(msg: S) -> GeneralError {
+    pub fn new<S: AsRef<str>>(msg: S) -> Self {
         let message = msg.as_ref().to_string();
-        GeneralError {
+        Self {
             message,
             from: None,
         }
     }
 
     /// Create a new GeneralError instance with a source
-    pub fn new_with_source(
-        message: String,
-        from: Box<dyn std::error::Error + Send + Sync>,
-    ) -> GeneralError {
-        GeneralError {
-            message,
-            from: Some(from),
+    pub fn new_with_source<S: Into<String>, B: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        from: B,
+    ) -> Self {
+        Self {
+            message: message.into(),
+            from: Some(Box::new(from)),
         }
     }
 }
+
+impl std::error::Error for GeneralError {}
 
 impl std::fmt::Display for GeneralError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -47,62 +50,74 @@ impl std::fmt::Display for GeneralError {
 
 impl From<std::io::Error> for GeneralError {
     fn from(value: std::io::Error) -> Self {
-        GeneralError::new_with_source(value.to_string(), value.into())
+        Self::new_with_source(value.to_string(), value)
+    }
+}
+
+impl From<&str> for GeneralError {
+    fn from(value: &str) -> Self {
+        Self::new(value)
     }
 }
 
 impl From<String> for GeneralError {
     fn from(value: String) -> Self {
-        GeneralError::new(value)
+        Self::new(value)
     }
 }
 
 // serde_json::Error is a type alias for serde_json::error::Error
 impl From<serde_json::Error> for GeneralError {
     fn from(value: serde_json::Error) -> Self {
-        GeneralError::new_with_source(value.to_string(), value.into())
+        Self::new_with_source(value.to_string(), value)
     }
 }
 
 impl From<ParseIntError> for GeneralError {
     fn from(value: ParseIntError) -> Self {
-        GeneralError::new(format!("ParseIntError: {value}"))
+        Self::new(format!("ParseIntError: {value}"))
     }
 }
 
 impl From<ParseFloatError> for GeneralError {
     fn from(value: ParseFloatError) -> Self {
-        GeneralError::new(format!("ParseFloatError: {value}"))
+        Self::new(format!("ParseFloatError: {value}"))
     }
 }
 
 impl From<FromUtf8Error> for GeneralError {
     fn from(value: FromUtf8Error) -> Self {
-        GeneralError::new_with_source(value.to_string(), value.into())
+        Self::new_with_source(value.to_string(), value)
     }
 }
 
 impl From<toml::ser::Error> for GeneralError {
     fn from(value: toml::ser::Error) -> Self {
-        GeneralError::new_with_source(value.to_string(), value.into())
+        Self::new_with_source(value.to_string(), value)
     }
 }
 
 impl From<reqwest::Error> for GeneralError {
     fn from(value: reqwest::Error) -> Self {
-        GeneralError::new_with_source(value.to_string(), value.into())
+        Self::new_with_source(value.to_string(), value)
     }
 }
 
 impl From<std::fmt::Error> for GeneralError {
     fn from(value: std::fmt::Error) -> Self {
-        GeneralError::new_with_source(value.to_string(), value.into())
+        Self::new_with_source(value.to_string(), value)
     }
 }
 
 impl From<toml::de::Error> for GeneralError {
     fn from(value: toml::de::Error) -> Self {
-        GeneralError::new_with_source(value.to_string(), value.into())
+        Self::new_with_source(value.to_string(), value)
+    }
+}
+
+impl From<clap::error::Error> for GeneralError {
+    fn from(value: clap::error::Error) -> Self {
+        Self::new_with_source(value.to_string(), value)
     }
 }
 
@@ -113,6 +128,6 @@ where
 {
     fn from(value: (S, B)) -> Self {
         // value.0 is the string, value.1 is the error
-        GeneralError::new_with_source(value.0.into(), Box::new(value.1))
+        Self::new_with_source(value.0.into(), value.1)
     }
 }

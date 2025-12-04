@@ -570,9 +570,9 @@ dependencies = [
 
 [[package]]
 name = "git-mover"
-version = "1.1.7"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e0f700aef69bbea5a3685e3ce3a62e065ab57ca1cc8ca27c48a7ff22b881199"
+checksum = "bb41a50d9105629258830aca9d5c9ccba5fb9ff92e1a3b0a1c6c7f0ab8fc9f63"
 dependencies = [
  "clap",
  "dotenv",
@@ -766,9 +766,9 @@ dependencies = [
 
 [[package]]
 name = "hyper-util"
-version = "0.1.18"
+version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52e9a2a24dc5c6821e71a7030e1e14b7b632acac55c40e9d2e082c621261bb56"
+checksum = "727805d60e7938b76b826a6ef209eb70eaa1812794f9424d4a4e2d740662df5f"
 dependencies = [
  "base64",
  "bytes",
@@ -1183,7 +1183,7 @@ dependencies = [
 
 [[package]]
 name = "n4n5"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "clap",
  "clap_complete",
