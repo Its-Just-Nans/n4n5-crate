@@ -778,9 +778,9 @@ dependencies = [
 
 [[package]]
 name = "galion"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65e5b76408b716431f8e9a6f32c72a86ed7e835d3e79aa004d6da2efa0aadef7"
+checksum = "3ba16af1d49e169c37c6a0111ec61e323335283ce07a7eec8ae216d32a34b8fd"
 dependencies = [
  "bindgen",
  "clap",
