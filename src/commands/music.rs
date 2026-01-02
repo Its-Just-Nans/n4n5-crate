@@ -138,7 +138,7 @@ impl MusicCliCommand {
                     .map_err(|e| ("Error with music-exporter", e))
                 })?;
             }
-        };
+        }
 
         Ok(())
     }

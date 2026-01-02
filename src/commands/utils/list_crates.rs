@@ -1,4 +1,4 @@
-//! list_crates
+//! [`list_crates`] function
 
 use std::{fmt::Write, fs, path::PathBuf, thread, time::Duration, vec};
 
@@ -42,9 +42,9 @@ pub struct UtilsListCrates {
     #[arg(long)]
     output_list_full: Option<PathBuf>,
 
-    /// Request delay (in seconds)
-    #[arg(long, default_value_t = 0.5)]
-    delay: f64,
+    /// Request delay (in milliseconds)
+    #[arg(long, default_value_t = 500)]
+    delay: u64,
 
     /// Filter crates
     #[arg(long)]
@@ -71,18 +71,15 @@ impl UtilsListCrates {
         let user_url = format!("https://crates.io/api/v1/users/{}", self.username);
         let user_res: UserResponse = client.get(&user_url).send()?.json()?;
 
-        let user_id = match user_res.user {
-            Some(u) => u.id,
-            None => {
-                let msg = format!("User '{}' not found on crates.io.", self.username);
-                eprintln!("{}", msg);
-                return Err(GeneralError::new(msg));
-            }
+        let Some(user_id) = user_res.user else {
+            let msg = format!("User '{}' not found on crates.io.", self.username);
+            eprintln!("{msg}");
+            return Err(GeneralError::new(msg));
         };
         if verbose {
             println!(
                 "Fetching crates for user '{}' (ID: {})...",
-                self.username, user_id
+                self.username, user_id.id
             );
         }
         let mut page = 1;
@@ -92,7 +89,7 @@ impl UtilsListCrates {
 
             let url = format!(
                 "https://crates.io/api/v1/crates?user_id={}&page={}&per_page={}",
-                user_id, page, per_page
+                user_id.id, page, per_page
             );
 
             let resp: CrateResponse = client.get(&url).send()?.json()?;
@@ -101,11 +98,13 @@ impl UtilsListCrates {
                 break;
             }
 
-            for c in resp.crates.iter() {
+            let crates_len = resp.crates.len();
+
+            for c in resp.crates {
                 all_crates.push(c.id.clone());
             }
 
-            if resp.crates.len() < per_page {
+            if crates_len < per_page {
                 break;
             }
 
@@ -141,7 +140,7 @@ impl UtilsListCrates {
             for row in rows {
                 let to_push = row[1..].to_vec();
                 if specials_crates.contains(&row[0]) {
-                    table3.push(to_push)
+                    table3.push(to_push);
                 } else if row[2].to_lowercase().starts_with(&pattern.to_lowercase()) {
                     table2.push(to_push);
                 } else {
@@ -154,7 +153,7 @@ impl UtilsListCrates {
         let mut buf = String::new();
         let table1 = header.clone().into_iter().chain(table1);
         let table1_markdown = table_to_markdown_table(table1, 3)?;
-        write!(&mut buf, "{}", table1_markdown)?;
+        write!(&mut buf, "{table1_markdown}")?;
         if !table2.is_empty() {
             if let Some(pattern) = &self.filtered {
                 let mut patt = pattern.clone();
@@ -167,13 +166,13 @@ impl UtilsListCrates {
             }
             let table2 = header.clone().into_iter().chain(table2);
             let table2_markdown = table_to_markdown_table(table2, 3)?;
-            write!(&mut buf, "{}", table2_markdown)?;
+            write!(&mut buf, "{table2_markdown}")?;
         }
         if !table3.is_empty() {
             writeln!(&mut buf, "\n## Others\n")?;
             let table3 = header.into_iter().chain(table3);
             let table3_markdown = table_to_markdown_table(table3, 3)?;
-            write!(&mut buf, "{}", table3_markdown)?;
+            write!(&mut buf, "{table3_markdown}")?;
         }
         Ok(buf)
     }
@@ -182,9 +181,7 @@ impl UtilsListCrates {
     /// # Errors
     /// Fails if the file cannot be found
     pub fn list_crates(&self, _config: &mut Config) -> Result<(), GeneralError> {
-        let delay = (self.delay * 1000.0) as u64;
-
-        let all_crates = self.get_all_crates(self.verbose, delay)?;
+        let all_crates = self.get_all_crates(self.verbose, self.delay)?;
         if let Some(list_file) = &self.output_list {
             pretty_print(&all_crates, list_file)?;
         }
@@ -193,11 +190,11 @@ impl UtilsListCrates {
         }
         let all_crates_infos: Vec<CrateData> = all_crates
             .iter()
-            .map(|crate_name| Self::get_one_crate(crate_name, delay))
+            .map(|crate_name| Self::get_one_crate(crate_name, self.delay))
             .filter_map(|res| match res {
                 Ok(val) => Some(val),
                 Err(err) => {
-                    eprintln!("Error fetching crate: {}", err);
+                    eprintln!("Error fetching crate: {err}");
                     None
                 }
             })
@@ -205,9 +202,7 @@ impl UtilsListCrates {
         if let Some(file_list_full) = &self.output_list_full {
             pretty_print(&all_crates_infos, file_list_full)?;
         }
-        let file_markdown = if let Some(file_markdown) = &self.output_markdown {
-            file_markdown
-        } else {
+        let Some(file_markdown) = &self.output_markdown else {
             return Ok(());
         };
         let rows = all_crates_infos.iter().map(|one_crate| {
@@ -223,17 +218,17 @@ impl UtilsListCrates {
             let name_with_url = format!("[{}](https://crates.io/crates/{})", &name, &name);
             let desc = description.clone().unwrap_or(default_text.clone());
             let homepage = if let Some(h) = homepage {
-                format!("<{}>", h)
+                format!("<{h}>")
             } else {
                 default_text.clone()
             };
             let url = if let Some(repo) = repository {
-                format!("<{}>", repo)
+                format!("<{repo}>")
             } else {
                 default_text.clone()
             };
             let docs = if let Some(doc) = documentation {
-                format!("<{}>", doc)
+                format!("<{doc}>")
             } else {
                 default_text.clone()
             };
@@ -249,10 +244,10 @@ impl UtilsListCrates {
         writeln!(&mut buf)?;
         writeln!(&mut buf, "## Crates")?;
         writeln!(&mut buf)?;
-        write!(&mut buf, "{}", tables)?;
+        write!(&mut buf, "{tables}")?;
 
         if file_markdown == &PathBuf::from("-") {
-            print!("{}", buf);
+            print!("{buf}");
             return Ok(());
         }
         fs::write(file_markdown, buf)?;
@@ -267,7 +262,7 @@ impl UtilsListCrates {
         // Sleep 0.5 seconds to avoid rate limiting
         thread::sleep(Duration::from_millis(delay));
         let user_agent = get_user_agent();
-        let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
+        let url = format!("https://crates.io/api/v1/crates/{crate_name}");
         let client = Client::new();
 
         let response = client

@@ -96,9 +96,10 @@ impl Gh {
         };
         let mut all_pulls = Vec::new();
         while response_data.has_next_page {
-            let add = match response_data.end_cursor.trim().is_empty() {
-                true => "".to_string(),
-                false => format!(", after: \"{}\"", response_data.end_cursor),
+            let add = if response_data.end_cursor.trim().is_empty() {
+                String::new()
+            } else {
+                format!(", after: \"{}\"", response_data.end_cursor)
             };
             let command = "gh api graphql -F owner='Its-Just-Nans' -f query='
     query($owner: String!) {
@@ -173,7 +174,7 @@ impl Gh {
     /// # Errors
     /// Fails if unable to fetch the projects
     fn fetch_projects(
-        project_type: ProjectType,
+        project_type: &ProjectType,
         debug: u8,
     ) -> Result<Vec<GhProject>, GeneralError> {
         let mut response_data = GhPageInfo {
@@ -205,9 +206,10 @@ impl Gh {
         };
         let mut all_projects = Vec::new();
         while response_data.has_next_page {
-            let add = match response_data.end_cursor.trim().is_empty() {
-                true => "".to_string(),
-                false => format!(", after: \"{}\", ", response_data.end_cursor),
+            let add = if response_data.end_cursor.trim().is_empty() {
+                String::new()
+            } else {
+                format!(", after: \"{}\", ", response_data.end_cursor)
             };
             let command = "gh api graphql -F owner='Its-Just-Nans' -f query='
     query( $owner: String!){
@@ -281,13 +283,14 @@ impl Gh {
         if !print_json {
             println!("Saving projects to {}", projects_path.display());
         }
-        let debug_level = match print_json {
-            true => 0,
-            false => config.cli_args.debug + 1,
+        let debug_level = if print_json {
+            0
+        } else {
+            config.cli_args.debug + 1
         };
-        let mut repos = Gh::fetch_projects(ProjectType::Repos, debug_level)?;
+        let mut repos = Gh::fetch_projects(&ProjectType::Repos, debug_level)?;
         repos.sort_by(|a, b| a.name.cmp(&b.name));
-        let mut gists = Gh::fetch_projects(ProjectType::Gists, debug_level)?;
+        let mut gists = Gh::fetch_projects(&ProjectType::Gists, debug_level)?;
         gists.sort_by(|a, b| a.name.cmp(&b.name));
         if !print_json {
             println!(
@@ -299,7 +302,7 @@ impl Gh {
         }
         let map: BTreeMap<String, Option<u64>> = repos
             .iter()
-            .map(|p| (p.url.replace("https://", "").to_string(), p.disk_usage))
+            .map(|p| (p.url.replace("https://", "").clone(), p.disk_usage))
             .collect();
 
         pretty_print(map, &projects_path_disk)?;

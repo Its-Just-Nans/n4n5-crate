@@ -45,7 +45,7 @@ pub struct AllMovies {
 
 impl AllMovies {
     /// Display the movies
-    pub fn display(&self, mode: DisplayMode) {
+    pub fn display(&self, mode: &DisplayMode) {
         for movie in &self.movies {
             match mode {
                 DisplayMode::Short => println!("{}", movie.display()),
@@ -259,11 +259,11 @@ impl Movies {
             }
         });
         if show_full {
-            all_movies.display(DisplayMode::Full);
+            all_movies.display(&DisplayMode::Full);
         } else if show_comment {
-            all_movies.display(DisplayMode::Comment);
+            all_movies.display(&DisplayMode::Comment);
         } else {
-            all_movies.display(DisplayMode::Short);
+            all_movies.display(&DisplayMode::Short);
         }
         Ok(())
     }
@@ -281,20 +281,35 @@ impl Movies {
     }
 
     /// Get the stats of the movies
-    fn get_stats(movies: &AllMovies) -> (u64, u64, f64, f64) {
+    /// # Errors
+    /// Fails if cannot get min date, max date, or convert length
+    fn get_stats(movies: &AllMovies) -> Result<(u64, u64, f64, f64), GeneralError> {
         // calculate the min date
-        let min_date = movies.movies.iter().map(|m| m.date).min().unwrap_or(0);
+        let min_date = movies
+            .movies
+            .iter()
+            .map(|m| m.date)
+            .min()
+            .ok_or("Cannot get min date of movies")?;
         // calculate the max date
-        let max_date = movies.movies.iter().map(|m| m.date).max().unwrap_or(0);
+        let max_date = movies
+            .movies
+            .iter()
+            .map(|m| m.date)
+            .max()
+            .ok_or("Cannot get max date of movies")?;
         // calculate the average note
-        let avg_note =
-            movies.movies.iter().map(|m| m.note).sum::<f64>() / movies.movies.len() as f64;
+        let movies_len = f64::from(
+            u32::try_from(movies.movies.len())
+                .map_err(|e| format!("Cannot convert the length of movies to a f64 {e}"))?,
+        );
+        let avg_note = movies.movies.iter().map(|m| m.note).sum::<f64>() / movies_len;
         // calculate the median note
         let mut notes = movies.movies.iter().map(|m| m.note).collect::<Vec<f64>>();
         notes.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         let median_note = notes[notes.len() / 2];
 
-        (min_date, max_date, avg_note, median_note)
+        Ok((min_date, max_date, avg_note, median_note))
     }
 
     /// Print the stats of the movies
@@ -302,7 +317,7 @@ impl Movies {
     /// Returns an error if unable to read the movies file
     fn print_stats(config: &mut Config, is_json: bool) -> Result<(), GeneralError> {
         let movies = Movies::get_all_movies(config)?;
-        let (min_date, max_date, avg_note, median_note) = Movies::get_stats(&movies);
+        let (min_date, max_date, avg_note, median_note) = Movies::get_stats(&movies)?;
         if is_json {
             let stats = serde_json::json!({
                 "movies": movies.movies.len(),

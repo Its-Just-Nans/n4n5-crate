@@ -15,7 +15,7 @@ pub struct GeneralError {
 }
 
 impl GeneralError {
-    /// Create a new GeneralError instance
+    /// Create a new [`GeneralError`] instance
     pub fn new<S: AsRef<str>>(msg: S) -> Self {
         let message = msg.as_ref().to_string();
         Self {
@@ -24,7 +24,7 @@ impl GeneralError {
         }
     }
 
-    /// Create a new GeneralError instance with a source
+    /// Create a new [`GeneralError`] instance with a source
     pub fn new_with_source<S: Into<String>, B: std::error::Error + Send + Sync + 'static>(
         message: S,
         from: B,

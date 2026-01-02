@@ -40,11 +40,11 @@ pub struct SyncCliCommand {
 #[derive(Deserialize, Serialize, Default)]
 pub struct ProgramsConfig {
     /// Path to the cargo programs
-    pub path_cargo_programs: Option<String>,
+    pub cargo_programs: Option<String>,
     /// Path to the vscode extensions
-    pub path_vscode_extensions: Option<String>,
+    pub vscode_extensions: Option<String>,
     /// Path to the nix programs
-    pub path_nix: Option<String>,
+    pub nix: Option<String>,
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -199,7 +199,7 @@ impl SyncCliCommand {
         }
         if let Some(sync) = &config.config_data.sync
             && let Some(programs) = &sync.programs
-            && programs.path_cargo_programs.is_none()
+            && programs.cargo_programs.is_none()
             && input_no("No cargo programs path found, do you want to add one?")?
         {
             return Ok(());
@@ -211,7 +211,7 @@ impl SyncCliCommand {
             SyncCliCommand,
             programs,
             ProgramsConfig,
-            path_cargo_programs,
+            cargo_programs,
             "cargo programs"
         );
         let cargo_programs = Command::new("sh")
@@ -233,7 +233,7 @@ impl SyncCliCommand {
         }
         if let Some(sync) = &config.config_data.sync
             && let Some(programs) = &sync.programs
-            && programs.path_nix.is_none()
+            && programs.nix.is_none()
             && input_no("No nix programs path found, do you want to add one?")?
         {
             return Ok(());
@@ -245,7 +245,7 @@ impl SyncCliCommand {
             SyncCliCommand,
             programs,
             ProgramsConfig,
-            path_nix,
+            nix,
             "nix programs"
         );
         let nix_programs = Command::new("sh")
@@ -267,7 +267,7 @@ impl SyncCliCommand {
         }
         if let Some(sync) = &config.config_data.sync
             && let Some(programs) = &sync.programs
-            && programs.path_vscode_extensions.is_none()
+            && programs.vscode_extensions.is_none()
             && input_no("No vscode extensions path found, do you want to add one?")?
         {
             return Ok(());
@@ -278,7 +278,7 @@ impl SyncCliCommand {
             SyncCliCommand,
             programs,
             ProgramsConfig,
-            path_vscode_extensions,
+            vscode_extensions,
             "vscode extensions"
         );
         let vscode_extensions = Command::new("sh")

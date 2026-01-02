@@ -3,28 +3,28 @@
 use serde::{Deserialize, Serialize};
 
 /// User Response
-#[derive(Deserialize)]
+#[derive(Debug,Deserialize)]
 pub(crate) struct UserResponse {
     /// User definition
     pub user: Option<User>,
 }
 
 /// User type
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct User {
     /// Id of user
     pub id: i64,
 }
 
 /// Crates info list
-#[derive(Deserialize)]
+#[derive(Debug,Deserialize)]
 pub(crate) struct CrateResponse {
     /// crates list
     pub crates: Vec<CrateInfo>,
 }
 
 /// crate info
-#[derive(Deserialize)]
+#[derive(Debug,Deserialize)]
 pub(crate) struct CrateInfo {
     /// Id of crate
     pub id: String,

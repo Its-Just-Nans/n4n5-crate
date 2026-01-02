@@ -155,7 +155,7 @@ impl ConfigSubcommand {
 /// The CLI main function
 /// Handle all arguments and invoke the correct command
 /// # Errors
-/// Returns a GeneralError if the command fails
+/// Returns a [`GeneralError`] if the command fails
 pub fn cli_main() -> Result<(), GeneralError> {
     let cli_args = CliArgs::parse();
     let mut config = Config::try_new(cli_args.clone())?;

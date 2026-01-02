@@ -47,10 +47,10 @@ where
         let line = row
             .iter()
             .zip(&max_sizes)
-            .map(|(s, width)| format!("{:width$}", s, width = width))
+            .map(|(s, width)| format!("{s:width$}"))
             .collect::<Vec<_>>()
             .join(" | ");
-        writeln!(&mut buf, "| {} |", line)?;
+        writeln!(&mut buf, "| {line} |")?;
 
         // separator after header
         if i == 0 {
@@ -59,7 +59,7 @@ where
                 .map(|&w| "-".repeat(w))
                 .collect::<Vec<_>>()
                 .join(" | ");
-            writeln!(&mut buf, "| {} |", sep)?;
+            writeln!(&mut buf, "| {sep} |")?;
         }
     }
     Ok(buf)
@@ -67,7 +67,7 @@ where
 
 /// Get input from the user with a prompt
 /// # Errors
-/// Returns a GeneralError if the input fails
+/// Returns a [`GeneralError`] if the input fails
 pub fn get_input(text: &str) -> Result<String, GeneralError> {
     println!("{text}");
     input()
@@ -75,7 +75,7 @@ pub fn get_input(text: &str) -> Result<String, GeneralError> {
 
 /// Get input from the user
 /// # Errors
-/// Returns a GeneralError if the input fails
+/// Returns a [`GeneralError`] if the input fails
 pub fn input() -> Result<String, GeneralError> {
     use std::io::{Write, stdin, stdout};
     let mut s = String::new();
@@ -94,7 +94,7 @@ pub fn input() -> Result<String, GeneralError> {
 
 /// Get a yes input from the user
 /// # Errors
-/// Returns a GeneralError if the input fails
+/// Returns a [`GeneralError`] if the input fails
 pub fn input_yes<S: AsRef<str>>(prompt: S) -> Result<bool, GeneralError> {
     use std::io::Write;
     print!("{} (y/n):", prompt.as_ref());
@@ -105,7 +105,7 @@ pub fn input_yes<S: AsRef<str>>(prompt: S) -> Result<bool, GeneralError> {
 
 /// Get a no input from the user
 /// # Errors
-/// Returns a GeneralError if the input fails
+/// Returns a [`GeneralError`] if the input fails
 pub fn input_no<S: AsRef<str>>(prompt: S) -> Result<bool, GeneralError> {
     let input_y = input_yes(prompt)?;
     Ok(!input_y)
@@ -113,7 +113,7 @@ pub fn input_no<S: AsRef<str>>(prompt: S) -> Result<bool, GeneralError> {
 
 /// Get a valid path from the user
 /// # Errors
-/// Returns a GeneralError if the path does not exist
+/// Returns a [`GeneralError`] if the path does not exist
 pub fn input_path() -> Result<(PathBuf, String), GeneralError> {
     let mut s = input()?;
     let mut path = PathBuf::from(&s);

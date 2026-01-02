@@ -11,7 +11,7 @@ use crate::{commands::utils::list_crates::UtilsListCrates, config::Config, error
 /// Movies configuration
 #[derive(Subcommand, Debug, Clone)]
 pub enum UtilsSubCommand {
-    /// list_crates subcommand
+    /// [`list_crates`] subcommand
     #[command(name = "list_crates")]
     ListCrates(UtilsListCrates),
 
@@ -32,6 +32,19 @@ pub enum UtilsSubCommand {
         #[arg(num_args = 0..)]
         args: Vec<String>,
     },
+
+    /// Launch galion tui
+    #[cfg(feature = "galion")]
+    #[command(
+        name = "galion",
+        trailing_var_arg = true,       // captures all remaining args
+        allow_hyphen_values = true     // allows unknown flags
+    )]
+    Galion {
+        /// Accept many arguments
+        #[arg(num_args = 0..)]
+        args: Vec<String>,
+    },
 }
 
 impl UtilsSubCommand {
@@ -42,9 +55,11 @@ impl UtilsSubCommand {
         match self {
             UtilsSubCommand::ListCrates(subcommand) => subcommand.list_crates(config),
             #[cfg(feature = "pngtools")]
-            UtilsSubCommand::PngTools => self.pngtools(),
+            UtilsSubCommand::PngTools => Self::pngtools(),
             #[cfg(feature = "git-mover")]
-            UtilsSubCommand::GitMover { ref args } => self.git_mover(args),
+            UtilsSubCommand::GitMover { ref args } => Self::git_mover(args),
+            #[cfg(feature = "galion")]
+            UtilsSubCommand::Galion { ref args } => Self::galion(args),
         }
     }
 
@@ -52,7 +67,7 @@ impl UtilsSubCommand {
     /// # Errors
     /// Fails if pngtools fails
     #[cfg(feature = "pngtools")]
-    pub fn pngtools(&self) -> Result<(), GeneralError> {
+    pub fn pngtools() -> Result<(), GeneralError> {
         pngtools::run_cli().map_err(|e| ("Error with pngtools", e))?;
         Ok(())
     }
@@ -61,7 +76,7 @@ impl UtilsSubCommand {
     /// # Errors
     /// Fails if git-mover fails
     #[cfg(feature = "git-mover")]
-    pub fn git_mover(&self, args: &[String]) -> Result<(), GeneralError> {
+    pub fn git_mover(args: &[String]) -> Result<(), GeneralError> {
         use clap::Parser;
         use git_mover::GitMoverCli;
         use tokio::runtime::Runtime;
@@ -80,6 +95,24 @@ impl UtilsSubCommand {
                 .await
                 .map_err(|e| GeneralError::new_with_source("Error with git-mover", e))
         })?;
+        Ok(())
+    }
+
+    /// Run galion cli
+    /// # Errors
+    /// Fails if galion fails
+    #[cfg(feature = "galion")]
+    pub fn galion(args: &[String]) -> Result<(), GeneralError> {
+        use clap::Parser;
+
+        use galion::{GalionApp, GalionArgs};
+
+        let galion_args = GalionArgs::try_parse_from(args)
+            .map_err(|e| GeneralError::new_with_source("Error with galion", e))?;
+        let app = GalionApp::try_from_galion_args(galion_args)
+            .map_err(|e| GeneralError::new_with_source("Error with galion", e))?;
+        app.run_tui()
+            .map_err(|e| GeneralError::new_with_source("Error with galion", e))?;
         Ok(())
     }
 }
