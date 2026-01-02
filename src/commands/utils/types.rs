@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// User Response
-#[derive(Debug,Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct UserResponse {
     /// User definition
     pub user: Option<User>,
@@ -17,14 +17,14 @@ pub(crate) struct User {
 }
 
 /// Crates info list
-#[derive(Debug,Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct CrateResponse {
     /// crates list
     pub crates: Vec<CrateInfo>,
 }
 
 /// crate info
-#[derive(Debug,Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct CrateInfo {
     /// Id of crate
     pub id: String,
