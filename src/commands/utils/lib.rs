@@ -6,7 +6,11 @@
 //!
 use clap::Subcommand;
 
-use crate::{commands::utils::list_crates::UtilsListCrates, config::Config, errors::GeneralError};
+use crate::{
+    commands::utils::{list_crates::UtilsListCrates, music::MusicSubcommand},
+    config::Config,
+    errors::GeneralError,
+};
 
 /// Movies configuration
 #[derive(Subcommand, Debug, Clone)]
@@ -45,6 +49,13 @@ pub enum UtilsSubCommand {
         #[arg(num_args = 0..)]
         args: Vec<String>,
     },
+
+    /// music subcommand
+    Music {
+        /// list of subcommands
+        #[command(subcommand)]
+        subcommand: MusicSubcommand,
+    },
 }
 
 impl UtilsSubCommand {
@@ -60,6 +71,7 @@ impl UtilsSubCommand {
             UtilsSubCommand::GitMover { ref args } => Self::git_mover(args),
             #[cfg(feature = "galion")]
             UtilsSubCommand::Galion { ref args } => Self::galion(args),
+            UtilsSubCommand::Music { subcommand } => subcommand.invoke(config),
         }
     }
 

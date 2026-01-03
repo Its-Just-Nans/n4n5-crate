@@ -2,7 +2,7 @@
 
 use crate::{
     cli::CliArgs,
-    commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand},
+    commands::{gh::lib::Gh, movies::Movies, sync::SyncCliCommand, utils::music::MusicCliCommand},
     errors::GeneralError,
 };
 use home::home_dir;

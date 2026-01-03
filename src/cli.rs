@@ -11,8 +11,8 @@ use std::{fs::create_dir_all, path::PathBuf, process::Command};
 
 use crate::{
     commands::{
-        gh::lib::GhSubCommand, movies::MoviesSubCommand, music::MusicSubcommand,
-        sync::SyncSubcommand, utils::lib::UtilsSubCommand,
+        gh::lib::GhSubCommand, movies::MoviesSubCommand, sync::SyncSubcommand,
+        utils::lib::UtilsSubCommand,
     },
     config::Config,
     errors::GeneralError,
@@ -47,13 +47,6 @@ pub enum Commands {
         /// list of subcommands
         #[command(subcommand)]
         subcommand: UtilsSubCommand,
-    },
-
-    /// music subcommand
-    Music {
-        /// list of subcommands
-        #[command(subcommand)]
-        subcommand: MusicSubcommand,
     },
 
     /// config subcommand
@@ -161,7 +154,6 @@ pub fn cli_main() -> Result<(), GeneralError> {
     let mut config = Config::try_new(cli_args.clone())?;
     match cli_args.command {
         Commands::Utils { subcommand } => subcommand.invoke(&mut config),
-        Commands::Music { subcommand } => subcommand.invoke(&mut config),
         Commands::Config { subcommand } => match subcommand {
             ConfigSubcommand::Open { show_path_only } => {
                 ConfigSubcommand::open(&mut config, show_path_only)

@@ -128,6 +128,11 @@ pub fn input_path() -> Result<(PathBuf, String), GeneralError> {
         s = input()?;
         path = PathBuf::from(&s);
     }
+    let path = if path.is_absolute() {
+        path
+    } else {
+        path.canonicalize()?
+    };
     let path_to_string = path.to_string_lossy();
     Ok((path.clone(), path_to_string.to_string()))
 }
