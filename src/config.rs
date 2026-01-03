@@ -1,7 +1,6 @@
 //! Configuration module
 
 use crate::{
-    cli::CliArgs,
     commands::{gh::lib::Gh, movies::Movies, sync::SyncCliCommand, utils::music::MusicCliCommand},
     errors::GeneralError,
 };
@@ -17,14 +16,16 @@ use std::{
 /// Configuration object
 /// It's linked to a configuration file
 pub struct Config {
-    /// cli arguments
-    pub cli_args: CliArgs,
-
     /// path to the configuration file
     pub config_path: PathBuf,
 
     /// actual configuration data
     pub config_data: ConfigData,
+
+    /// Turn debugging information on
+    pub debug: u8,
+    /// whether to use input for configuration
+    pub use_input: bool,
 }
 
 /// Configuration
@@ -49,18 +50,23 @@ impl Config {
     /// Create a new Config object from the default path
     /// # Errors
     /// Error if the file can't be opened
-    pub fn try_new(cli_args: CliArgs) -> Result<Self, GeneralError> {
-        let config_path = match cli_args.config.clone() {
+    pub fn try_new(
+        config_path: Option<PathBuf>,
+        debug: u8,
+        use_input: bool,
+    ) -> Result<Self, GeneralError> {
+        let config_path = match config_path {
             Some(p) => p,
             None => Config::get_config_path()?,
         };
-        let contents = read_to_string(config_path.clone())
+        let contents = read_to_string(&config_path)
             .map_err(|e| (format!("Unable to open '{}'", config_path.display()), e))?;
         let config_data = toml::from_str(&contents)?;
         Ok(Config {
-            cli_args,
             config_path,
             config_data,
+            debug,
+            use_input,
         })
     }
 

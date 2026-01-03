@@ -139,13 +139,13 @@ impl Gh {
         }
     }'"
             .replace("100)", format!("100{add})",).as_str());
-            if config.cli_args.debug > 0 {
+            if config.debug > 0 {
                 println!("Running command:");
                 println!("{command}");
             }
             let output = Command::new("sh").arg("-c").arg(command).output()?;
             let output = String::from_utf8_lossy(&output.stdout).to_string();
-            if config.cli_args.debug > 1 {
+            if config.debug > 1 {
                 println!("Output:");
                 println!("{output}");
             }
@@ -283,11 +283,7 @@ impl Gh {
         if !print_json {
             println!("Saving projects to {}", projects_path.display());
         }
-        let debug_level = if print_json {
-            0
-        } else {
-            config.cli_args.debug + 1
-        };
+        let debug_level = if print_json { 0 } else { config.debug + 1 };
         let mut repos = Gh::fetch_projects(&ProjectType::Repos, debug_level)?;
         repos.sort_by(|a, b| a.name.cmp(&b.name));
         let mut gists = Gh::fetch_projects(&ProjectType::Gists, debug_level)?;
@@ -302,7 +298,7 @@ impl Gh {
         }
         let map: BTreeMap<String, Option<u64>> = repos
             .iter()
-            .map(|p| (p.url.replace("https://", "").clone(), p.disk_usage))
+            .map(|p| (p.url.replace("https://", ""), p.disk_usage))
             .collect();
 
         pretty_print(map, &projects_path_disk)?;

@@ -101,7 +101,7 @@ impl UtilsListCrates {
             let crates_len = resp.crates.len();
 
             for c in resp.crates {
-                all_crates.push(c.id.clone());
+                all_crates.push(c.id);
             }
 
             if crates_len < per_page {
@@ -156,11 +156,13 @@ impl UtilsListCrates {
         write!(&mut buf, "{table1_markdown}")?;
         if !table2.is_empty() {
             if let Some(pattern) = &self.filtered {
-                let mut patt = pattern.clone();
-                if let Some(r) = patt.get_mut(0..1) {
-                    r.make_ascii_uppercase();
-                }
-                writeln!(&mut buf, "\n## {patt}\n")?;
+                let first_letter = pattern.get(0..1).unwrap_or("");
+                let rest_letter = pattern.get(1..).unwrap_or("");
+                writeln!(
+                    &mut buf,
+                    "\n## {}{rest_letter}\n",
+                    first_letter.to_ascii_uppercase()
+                )?;
             } else {
                 writeln!(&mut buf, "\n## Filtered\n")?;
             }
@@ -205,7 +207,7 @@ impl UtilsListCrates {
         let Some(file_markdown) = &self.output_markdown else {
             return Ok(());
         };
-        let rows = all_crates_infos.iter().map(|one_crate| {
+        let rows = all_crates_infos.into_iter().map(|one_crate| {
             let CrateInnerData {
                 description,
                 name,
@@ -213,27 +215,26 @@ impl UtilsListCrates {
                 homepage,
                 documentation,
                 ..
-            } = &one_crate.krate;
-            let default_text = "N/A".to_string();
+            } = one_crate.krate;
             let name_with_url = format!("[{}](https://crates.io/crates/{})", &name, &name);
-            let desc = description.clone().unwrap_or(default_text.clone());
+            let desc = description.unwrap_or("N/A".to_string());
             let homepage = if let Some(h) = homepage {
-                format!("<{h}>")
+                &format!("<{h}>")
             } else {
-                default_text.clone()
+                "N/A"
             };
             let url = if let Some(repo) = repository {
-                format!("<{repo}>")
+                &format!("<{repo}>")
             } else {
-                default_text.clone()
+                "N/A"
             };
             let docs = if let Some(doc) = documentation {
-                format!("<{doc}>")
+                &format!("<{doc}>")
             } else {
-                default_text.clone()
+                "N/A"
             };
             let infos = format!("{homepage} <br/> {url} <br/> {docs}");
-            [name.clone(), name_with_url, desc, infos]
+            [name, name_with_url, desc, infos]
         });
         let tables = self.generate_markdown_table(rows)?;
         let mut buf = String::new();

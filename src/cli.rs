@@ -116,6 +116,21 @@ impl Commands {
         man_generate_to(cmd, outdir)?;
         Ok(())
     }
+
+    /// Invoke subcommands
+    /// # Errors
+    /// Fails if subcommand fails
+    fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
+        match self {
+            Commands::Utils { subcommand } => subcommand.invoke(config),
+            Commands::Config { subcommand } => subcommand.invoke(config),
+            Commands::Gh { subcommand } => subcommand.invoke(config),
+            Commands::Movies { subcommand } => subcommand.invoke(config),
+            Commands::Sync { subcommand } => subcommand.invoke(config),
+            Commands::Completions => Commands::gen_completions(config),
+            Commands::Man => Commands::gen_man(config),
+        }
+    }
 }
 
 /// Config subcommand
@@ -130,6 +145,17 @@ pub enum ConfigSubcommand {
 }
 
 impl ConfigSubcommand {
+    /// Invoke subcommands
+    /// # Errors
+    /// Fails if subcommand fails
+    fn invoke(&self, config: &mut Config) -> Result<(), GeneralError> {
+        match self {
+            ConfigSubcommand::Open { show_path_only } => {
+                ConfigSubcommand::open(config, *show_path_only)
+            }
+        }
+    }
+
     /// Open the config file with the default editor
     /// # Errors
     /// Return an error if the editor fails to open
@@ -151,18 +177,12 @@ impl ConfigSubcommand {
 /// Returns a [`GeneralError`] if the command fails
 pub fn cli_main() -> Result<(), GeneralError> {
     let cli_args = CliArgs::parse();
-    let mut config = Config::try_new(cli_args.clone())?;
-    match cli_args.command {
-        Commands::Utils { subcommand } => subcommand.invoke(&mut config),
-        Commands::Config { subcommand } => match subcommand {
-            ConfigSubcommand::Open { show_path_only } => {
-                ConfigSubcommand::open(&mut config, show_path_only)
-            }
-        },
-        Commands::Gh { subcommand } => subcommand.invoke(&mut config),
-        Commands::Movies { subcommand } => subcommand.invoke(&mut config),
-        Commands::Sync { subcommand } => subcommand.invoke(&mut config),
-        Commands::Completions => Commands::gen_completions(&mut config),
-        Commands::Man => Commands::gen_man(&mut config),
-    }
+    let CliArgs {
+        command,
+        use_input,
+        debug,
+        config,
+    } = cli_args;
+    let mut config = Config::try_new(config, debug, use_input)?;
+    command.invoke(&mut config)
 }

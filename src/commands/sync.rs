@@ -111,21 +111,17 @@ impl SyncCliCommand {
     /// Returns an error if the home directory cannot be found
     fn get_home_path() -> Result<(PathBuf, String), GeneralError> {
         let path_buf = home::home_dir().ok_or(GeneralError::new("Cannot find home directory"))?;
-        let path = path_buf.clone();
-        let path = path
+        let path = path_buf
             .to_str()
-            .ok_or(GeneralError::new("Cannot convert home directory to string"))?;
-        Ok((path_buf, path.to_string()))
+            .ok_or(GeneralError::new("Cannot convert home directory to string"))?
+            .to_string();
+        Ok((path_buf, path))
     }
 
     /// Save the files to the specified folder
     /// # Errors
     /// Returns an error if the file cannot be saved
     fn save_files(config: &mut Config) -> Result<(), GeneralError> {
-        let files_path = match &config.config_data.sync {
-            Some(settings) => settings.file_paths.clone(),
-            None => Vec::new(),
-        };
         let folder_path = config_path!(
             config,
             sync,
@@ -133,6 +129,10 @@ impl SyncCliCommand {
             save_folder_path,
             "settings folder"
         );
+        let files_path = match &config.config_data.sync {
+            Some(settings) => settings.file_paths.as_ref(),
+            None => &Vec::new(),
+        };
 
         let (home_pathbuf, _) = SyncCliCommand::get_home_path()?;
         let files_path = files_path
@@ -175,14 +175,13 @@ impl SyncCliCommand {
     /// Returns an error if the file path is invalid
     fn add_file(config: &mut Config) -> Result<(), GeneralError> {
         println!("Please enter the path to the file to add:");
-        let file_path = input_path()?;
-        let cloned_path = file_path.1.clone();
+        let (_file_path, path_string) = input_path()?;
         config.update(|config_data| {
             if let Some(local_config) = config_data.sync.as_mut() {
-                local_config.file_paths.push(cloned_path);
+                local_config.file_paths.push(path_string);
             } else {
                 config_data.sync = Some(SyncCliCommand {
-                    file_paths: vec![cloned_path],
+                    file_paths: vec![path_string],
                     ..Default::default()
                 });
             }
@@ -194,7 +193,7 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_cargo(config: &mut Config) -> Result<(), GeneralError> {
-        if !config.cli_args.use_input {
+        if !config.use_input {
             return Ok(());
         }
         if let Some(sync) = &config.config_data.sync
@@ -228,7 +227,7 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_nix(config: &mut Config) -> Result<(), GeneralError> {
-        if !config.cli_args.use_input {
+        if !config.use_input {
             return Ok(());
         }
         if let Some(sync) = &config.config_data.sync
@@ -262,7 +261,7 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if the command fails
     fn sync_programs_vscode(config: &mut Config) -> Result<(), GeneralError> {
-        if !config.cli_args.use_input {
+        if !config.use_input {
             return Ok(());
         }
         if let Some(sync) = &config.config_data.sync
@@ -306,8 +305,8 @@ impl SyncCliCommand {
     /// # Errors
     /// Returns an error if any of the subcommands fails
     fn sync_all(config: &mut Config) -> Result<(), GeneralError> {
-        config.cli_args.use_input = false;
-        if config.cli_args.debug > 1 {
+        config.use_input = false;
+        if config.debug > 1 {
             println!("Syncing all");
         }
         if config.config_data.movies.is_some() {

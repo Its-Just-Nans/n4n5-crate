@@ -14,19 +14,18 @@ macro_rules! config_path {
                     $string,
                     ":"
                 ));
-                let file_path = input_path()?;
-                let cloned_path = file_path.1.clone();
+                let (file_path, path_string) = input_path()?;
                 $config.update(|config_data| {
                     if let Some(local_config) = config_data.$setting_name.as_mut() {
-                        local_config.$key_name = Some(cloned_path);
+                        local_config.$key_name = Some(path_string);
                     } else {
                         config_data.$setting_name = Some($struct_name {
-                            $key_name: Some(cloned_path),
+                            $key_name: Some(path_string),
                             ..Default::default()
                         });
                     }
                 })?;
-                file_path.0
+                file_path
             }
         }
     };
@@ -51,26 +50,25 @@ macro_rules! config_sub_path {
                     $string,
                     ":"
                 ));
-                let file_path = input_path()?;
-                let cloned_path = file_path.1.clone();
+                let (file_path, path_string) = input_path()?;
                 $config.update(|config_data| match config_data.$setting_name {
                     Some($struct_name {
                         $key_name: Some(ref mut local_config),
                         ..
                     }) => {
-                        local_config.$sub_key_name = Some(cloned_path);
+                        local_config.$sub_key_name = Some(path_string);
                     }
                     _ => {
                         config_data.$setting_name = Some($struct_name {
                             $key_name: Some($sub_struct_name {
-                                $sub_key_name: Some(cloned_path),
+                                $sub_key_name: Some(path_string),
                                 ..Default::default()
                             }),
                             ..Default::default()
                         });
                     }
                 })?;
-                file_path.0
+                file_path
             }
         }
     }};
