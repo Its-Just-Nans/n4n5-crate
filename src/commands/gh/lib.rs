@@ -196,6 +196,7 @@ impl Gh {
                         name
                         color
                     }
+                    archivedAt
                     homepageUrl
                     diskUsage
                     forkCount
@@ -245,30 +246,31 @@ impl Gh {
                 println!("{output}");
             }
             let output = serde_json::from_str::<Value>(&output)?;
-            match output {
-                Value::Object(map) => {
-                    if let Some(Value::Object(data)) = map.get("data")
-                        && let Some(Value::Object(user)) = data.get("user")
-                        && let Some(Value::Object(projects)) = user.get(fetch_type)
-                    {
-                        if let Some(nodes) = projects.get("nodes") {
-                            let nodes: Vec<GhProject> = serde_json::from_value(nodes.clone())?;
-                            if debug > 0 {
-                                println!("Received {} {}", nodes.len(), fetch_type);
-                            }
-                            all_projects.extend(nodes);
+            if let Value::Object(map) = &output {
+                if let Some(Value::Object(data)) = map.get("data")
+                    && let Some(Value::Object(user)) = data.get("user")
+                    && let Some(Value::Object(projects)) = user.get(fetch_type)
+                {
+                    if let Some(nodes) = projects.get("nodes") {
+                        let nodes: Vec<GhProject> = serde_json::from_value(nodes.clone())?;
+                        if debug > 0 {
+                            println!("Received {} {}", nodes.len(), fetch_type);
                         }
-                        response_data = serde_json::from_value(
-                            projects
-                                .get("pageInfo")
-                                .ok_or(GeneralError::new("Unable to find pageInfo in gh command"))?
-                                .clone(),
-                        )?;
+                        all_projects.extend(nodes);
                     }
+                    response_data = serde_json::from_value(
+                        projects
+                            .get("pageInfo")
+                            .ok_or(GeneralError::new("Unable to find pageInfo in gh command"))?
+                            .clone(),
+                    )?;
+                } else {
+                    eprintln!("gh command faileds: {output}");
+                    break;
                 }
-                _ => {
-                    println!("Unable to parse json from gh command");
-                }
+            } else {
+                eprintln!("Unable to parse json from gh command");
+                break;
             }
         }
         Ok(all_projects)

@@ -146,6 +146,10 @@ pub struct GhProject {
     #[serde(rename = "stargazerCount")]
     pub stargazer_count: i32,
 
+    /// archivedAt
+    #[serde(rename = "archivedAt")]
+    pub archived_at: Option<String>,
+
     /// homepageUrl
     #[serde(rename = "homepageUrl")]
     pub homepage_url: Option<String>,
