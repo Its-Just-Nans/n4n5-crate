@@ -19,7 +19,7 @@ use crate::{
 };
 
 /// Example CLI using clap derive and subcommands
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug)]
 #[command(name = "n4n5")]
 #[command(about = "n4n5 CLI", long_about = None)]
 pub struct CliArgs {
@@ -40,7 +40,7 @@ pub struct CliArgs {
     pub command: Commands,
 }
 
-#[derive(Subcommand, Debug, Clone)]
+#[derive(Subcommand, Debug)]
 pub enum Commands {
     /// utils subcommand
     Utils {

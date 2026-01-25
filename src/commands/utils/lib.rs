@@ -13,7 +13,7 @@ use crate::{
 };
 
 /// Movies configuration
-#[derive(Subcommand, Debug, Clone)]
+#[derive(Subcommand, Debug)]
 pub enum UtilsSubCommand {
     /// [`list_crates`] subcommand
     #[command(name = "list_crates")]
@@ -26,29 +26,13 @@ pub enum UtilsSubCommand {
 
     /// Launch git-mover cli
     #[cfg(feature = "git-mover")]
-    #[command(
-        name = "git-mover",
-        trailing_var_arg = true,       // captures all remaining args
-        allow_hyphen_values = true     // allows unknown flags
-    )]
-    GitMover {
-        /// Accept many arguments
-        #[arg(num_args = 0..)]
-        args: Vec<String>,
-    },
+    #[command(name = "git-mover")]
+    GitMover(git_mover::GitMoverCli),
 
     /// Launch galion tui
     #[cfg(feature = "galion")]
-    #[command(
-        name = "galion",
-        trailing_var_arg = true,       // captures all remaining args
-        allow_hyphen_values = true     // allows unknown flags
-    )]
-    Galion {
-        /// Accept many arguments
-        #[arg(num_args = 0..)]
-        args: Vec<String>,
-    },
+    #[command(name = "galion")]
+    Galion(galion::GalionArgs),
 
     /// music subcommand
     Music {
@@ -68,9 +52,9 @@ impl UtilsSubCommand {
             #[cfg(feature = "pngtools")]
             UtilsSubCommand::PngTools => Self::pngtools(),
             #[cfg(feature = "git-mover")]
-            UtilsSubCommand::GitMover { ref args } => Self::git_mover(args),
+            UtilsSubCommand::GitMover(git_mover) => Self::git_mover(git_mover),
             #[cfg(feature = "galion")]
-            UtilsSubCommand::Galion { ref args } => Self::galion(args),
+            UtilsSubCommand::Galion(galion_args) => Self::galion(galion_args),
             UtilsSubCommand::Music { subcommand } => subcommand.invoke(config),
         }
     }
@@ -88,9 +72,7 @@ impl UtilsSubCommand {
     /// # Errors
     /// Fails if git-mover fails
     #[cfg(feature = "git-mover")]
-    pub fn git_mover(args: &[String]) -> Result<(), GeneralError> {
-        use clap::Parser;
-        use git_mover::GitMoverCli;
+    pub fn git_mover(git_mover_inst: git_mover::GitMoverCli) -> Result<(), GeneralError> {
         use tokio::runtime::Runtime;
 
         let rt = Runtime::new()?;
@@ -100,8 +82,6 @@ impl UtilsSubCommand {
                 .format_target(false)
                 .format_timestamp(None)
                 .init();
-            let git_mover_inst = GitMoverCli::try_parse_from(args)
-                .map_err(|e| GeneralError::new_with_source("Error with git-mover", e))?;
             git_mover_inst
                 .main()
                 .await
@@ -114,13 +94,9 @@ impl UtilsSubCommand {
     /// # Errors
     /// Fails if galion fails
     #[cfg(feature = "galion")]
-    pub fn galion(args: &[String]) -> Result<(), GeneralError> {
-        use clap::Parser;
+    pub fn galion(galion_args: galion::GalionArgs) -> Result<(), GeneralError> {
+        use galion::GalionApp;
 
-        use galion::{GalionApp, GalionArgs};
-
-        let galion_args = GalionArgs::try_parse_from(args)
-            .map_err(|e| GeneralError::new_with_source("Error with galion", e))?;
         let app = GalionApp::try_from_galion_args(galion_args)
             .map_err(|e| GeneralError::new_with_source("Error with galion", e))?;
         app.run_tui()

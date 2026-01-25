@@ -41,7 +41,7 @@ impl std::error::Error for GeneralError {}
 impl std::fmt::Display for GeneralError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(from) = &self.from {
-            write!(f, "GeneralError: {} from {}", self.message, from)
+            write!(f, "GeneralError: {}: {}", self.message, from)
         } else {
             write!(f, "GeneralError: {}", self.message)
         }
