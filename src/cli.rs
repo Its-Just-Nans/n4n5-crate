@@ -11,8 +11,8 @@ use std::{fs::create_dir_all, path::PathBuf, process::Command};
 
 use crate::{
     commands::{
-        gh::lib::GhSubCommand, movies::MoviesSubCommand, sync::SyncSubcommand,
-        utils::lib::UtilsSubCommand,
+        gh::lib::GhSubCommand, movies::MoviesSubCommand, shortcuts::ShortcutsSubcommand,
+        sync::SyncSubcommand, utils::lib::UtilsSubCommand,
     },
     config::Config,
     errors::GeneralError,
@@ -80,6 +80,14 @@ pub enum Commands {
     /// generate completions
     Completions,
 
+    /// Shortcuts subcommand
+    #[command(alias = "s")]
+    Shortcuts {
+        /// list of subcommands
+        #[command(subcommand)]
+        subcommand: ShortcutsSubcommand,
+    },
+
     /// generate man
     Man,
 }
@@ -129,6 +137,7 @@ impl Commands {
             Commands::Sync { subcommand } => subcommand.invoke(config),
             Commands::Completions => Commands::gen_completions(config),
             Commands::Man => Commands::gen_man(config),
+            Commands::Shortcuts { subcommand } => subcommand.run(),
         }
     }
 }
