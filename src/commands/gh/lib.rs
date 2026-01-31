@@ -36,6 +36,7 @@ pub struct Gh {
     pub file_projects_disk: Option<String>,
 }
 
+/// Github subcommands
 #[derive(Subcommand, Debug, Clone)]
 pub enum GhSubCommand {
     /// Save pulls

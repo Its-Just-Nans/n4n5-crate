@@ -29,6 +29,7 @@ pub struct MusicCliCommand {
     pub env_path: Option<String>,
 }
 
+/// Music subcommands
 #[derive(Subcommand, Debug, Clone)]
 pub enum MusicSubcommand {
     /// Save music

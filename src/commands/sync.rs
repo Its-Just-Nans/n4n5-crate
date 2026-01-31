@@ -47,6 +47,7 @@ pub struct ProgramsConfig {
     pub nix: Option<String>,
 }
 
+/// Sync subcommands
 #[derive(Subcommand, Debug, Clone)]
 pub enum SyncSubcommand {
     /// save settings
@@ -78,6 +79,7 @@ pub struct SettingsCommand {
     pub action: SettingsAction,
 }
 
+/// settings actions
 #[derive(Subcommand, Debug, Clone)]
 pub enum SettingsAction {
     /// add a file to save

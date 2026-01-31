@@ -40,6 +40,7 @@ pub struct CliArgs {
     pub command: Commands,
 }
 
+/// Main commands enum
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// utils subcommand
