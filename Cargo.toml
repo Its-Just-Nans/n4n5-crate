@@ -1,6 +1,6 @@
 [package]
 name = "n4n5"
-version = "1.6.1"
+version = "1.6.2"
 edition = "2024"
 description = "n4n5's utility crate"
 documentation = "https://docs.rs/n4n5"
