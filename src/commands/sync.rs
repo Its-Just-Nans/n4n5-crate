@@ -18,6 +18,7 @@ use crate::{
     config::Config,
     config_path, config_sub_path,
     errors::GeneralError,
+    get_config_path,
     utils::{input_no, input_path},
 };
 
@@ -101,7 +102,10 @@ impl SyncSubcommand {
             Self::Programs => SyncCliCommand::sync_programs(config),
             Self::Settings(settings) => match settings.action {
                 SettingsAction::Add => SyncCliCommand::add_file(config),
-                SettingsAction::All => SyncCliCommand::save_files(config),
+                SettingsAction::All => {
+                    SyncCliCommand::pre_save_files(config)?;
+                    SyncCliCommand::save_files(config)
+                }
             },
         }
     }
@@ -120,17 +124,31 @@ impl SyncCliCommand {
         Ok((path_buf, path))
     }
 
-    /// Save the files to the specified folder
+    /// Pre Save the files to the specified folder
     /// # Errors
-    /// Returns an error if the file cannot be saved
-    fn save_files(config: &mut Config) -> Result<(), GeneralError> {
-        let folder_path = config_path!(
+    /// Returns an error if the config cannot be saved
+    fn pre_save_files(config: &mut Config) -> Result<(), GeneralError> {
+        config_path!(
             config,
             sync,
             SyncCliCommand,
             save_folder_path,
             "settings folder"
         );
+        Ok(())
+    }
+
+    /// Save the files to the specified folder
+    /// # Errors
+    /// Returns an error if the file cannot be saved
+    fn save_files(config: &Config) -> Result<(), GeneralError> {
+        let folder_path = get_config_path!(
+            config,
+            sync,
+            SyncCliCommand,
+            save_folder_path,
+            "settings folder"
+        )?;
         let files_path = match &config.config_data.sync {
             Some(settings) => settings.file_paths.as_ref(),
             None => &Vec::new(),
@@ -312,10 +330,12 @@ impl SyncCliCommand {
             println!("Syncing all");
         }
         if config.config_data.movies.is_some() {
-            Movies::full_sync_movies(config, false)?;
+            Movies::pre_sync_movies(config)?;
+            Movies::sync_movies(config, false)?;
             println!();
         }
         if config.config_data.sync.is_some() {
+            SyncCliCommand::pre_save_files(config)?;
             SyncCliCommand::save_files(config)?;
             println!();
         }
@@ -324,6 +344,7 @@ impl SyncCliCommand {
             println!();
         }
         if config.config_data.gh.is_some() {
+            Gh::pre_sync_github(config)?;
             Gh::sync_github(config, false)?;
         }
         Ok(())

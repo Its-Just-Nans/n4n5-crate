@@ -9,8 +9,12 @@ use serde_json::Value;
 use std::{collections::BTreeMap, fs::write, path::PathBuf, process::Command};
 
 use crate::{
-    commands::gh::types::GhProject, config::Config, config_path, errors::GeneralError,
-    utils::input_path, utils::pretty_print,
+    commands::gh::types::GhProject,
+    config::Config,
+    config_path,
+    errors::GeneralError,
+    get_config_path,
+    utils::{input_path, pretty_print},
 };
 
 use super::types::{GhPageInfo, GhResponse};
@@ -60,8 +64,14 @@ impl GhSubCommand {
     /// Error if error in subcommand
     pub fn invoke(self, config: &mut Config) -> Result<(), GeneralError> {
         match self {
-            Self::Projects { print_json } => Gh::save_projects(config, print_json),
-            Self::Pulls { print_json: _ } => Gh::save_pulls(config),
+            Self::Projects { print_json } => {
+                Gh::pre_save_projects(config)?;
+                Gh::save_projects(config, print_json)
+            }
+            Self::Pulls { print_json: _ } => {
+                Gh::pre_save_pulls(config)?;
+                Gh::save_pulls(config)
+            }
         }
     }
 }
@@ -75,21 +85,37 @@ enum ProjectType {
 }
 
 impl Gh {
+    /// Pre Sync the github data
+    /// # Errors
+    /// Fails if unable to save config
+    pub fn pre_sync_github(config: &mut Config) -> Result<(), GeneralError> {
+        Gh::pre_save_pulls(config)?;
+        Gh::pre_save_projects(config)?;
+        Ok(())
+    }
     /// Sync the github data
     /// # Errors
     /// Fails if unable to save the pulls or projects
-    pub fn sync_github(config: &mut Config, is_json: bool) -> Result<(), GeneralError> {
+    pub fn sync_github(config: &Config, is_json: bool) -> Result<(), GeneralError> {
         println!("Syncing github data");
         Gh::save_pulls(config)?;
         Gh::save_projects(config, is_json)?;
         Ok(())
     }
 
+    /// Pre Save the pulls
+    /// # Errors
+    /// Fails if unable to write to config
+    fn pre_save_pulls(config: &mut Config) -> Result<(), GeneralError> {
+        config_path!(config, gh, Gh, file_pulls, "pulls file");
+        Ok(())
+    }
+
     /// Save the pulls to the specified file
     /// # Errors
     /// Fails if unable to write to file
-    fn save_pulls(config: &mut Config) -> Result<(), GeneralError> {
-        let pulls_path = config_path!(config, gh, Gh, file_pulls, "pulls file");
+    fn save_pulls(config: &Config) -> Result<(), GeneralError> {
+        let pulls_path = get_config_path!(config, gh, Gh, file_pulls, "pulls file")?;
         println!("Saving pulls to {}", pulls_path.display());
         let mut response_data = GhPageInfo {
             has_next_page: true,
@@ -277,12 +303,22 @@ impl Gh {
         Ok(all_projects)
     }
 
+    /// Pre Save the projects to the specified file
+    /// # Errors
+    /// Fails if unable to write to config
+    fn pre_save_projects(config: &mut Config) -> Result<(), GeneralError> {
+        config_path!(config, gh, Gh, file_projects, "projects file");
+        config_path!(config, gh, Gh, file_projects_disk, "projects file");
+        Ok(())
+    }
+
     /// Save the projects to the specified file
     /// # Errors
     /// Fails if unable to write to file
-    fn save_projects(config: &mut Config, print_json: bool) -> Result<(), GeneralError> {
-        let projects_path = config_path!(config, gh, Gh, file_projects, "projects file");
-        let projects_path_disk = config_path!(config, gh, Gh, file_projects_disk, "projects file");
+    fn save_projects(config: &Config, print_json: bool) -> Result<(), GeneralError> {
+        let projects_path = get_config_path!(config, gh, Gh, file_projects, "projects file")?;
+        let projects_path_disk =
+            get_config_path!(config, gh, Gh, file_projects_disk, "projects file")?;
         if !print_json {
             println!("Saving projects to {}", projects_path.display());
         }
