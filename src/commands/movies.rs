@@ -12,6 +12,7 @@ use crate::{
     config::Config,
     config_path,
     errors::GeneralError,
+    get_config_path,
     utils::{get_input, input_path},
 };
 
@@ -157,7 +158,7 @@ impl MoviesSubCommand {
                 show_comment,
             } => Movies::print_sorted_movies(config, reverse, show_comment, show_full),
             Self::Stats { print_json } => Movies::print_stats(config, print_json),
-            Self::Sync { print_json } => Movies::sync_movies(config, print_json),
+            Self::Sync { print_json } => Movies::full_sync_movies(config, print_json),
         }
     }
 }
@@ -166,9 +167,13 @@ impl Movies {
     /// Get the movie path
     /// # Errors
     /// Returns an error if unable to read the movies file
-    pub fn get_movie_path(config: &mut Config) -> Result<PathBuf, GeneralError> {
-        let path = config_path!(config, movies, Movies, file_path, "movies file");
-        Ok(path)
+    pub fn get_movie_path(config: &Config) -> Result<PathBuf, GeneralError> {
+        if let Some(movies_config) = &config.config_data.movies
+            && let Some(movie_path) = &movies_config.file_path
+        {
+            return Ok(PathBuf::from(movie_path));
+        }
+        Err(GeneralError::new("movies path not set"))
     }
 
     /// Add a movie
@@ -215,7 +220,7 @@ impl Movies {
     /// Get all movies
     /// # Errors
     /// Returns an error if unable to read the movies file
-    pub fn get_all_movies(config: &mut Config) -> Result<AllMovies, GeneralError> {
+    pub fn get_all_movies(config: &Config) -> Result<AllMovies, GeneralError> {
         let file_path = Movies::get_movie_path(config)?;
         if config.debug > 0 {
             println!("Reading movies file at {}", file_path.display());
@@ -337,21 +342,46 @@ impl Movies {
         Ok(())
     }
 
-    /// Sync the public movie file
+    /// Full sync movies. Used to set the settings
+    ///
     /// # Errors
-    /// Returns an error if unable to read the movies file
-    pub fn sync_movies(config: &mut Config, print_json: bool) -> Result<(), GeneralError> {
-        if config.debug > 1 {
-            println!("Syncing movies");
-        }
-        let movies = Movies::get_all_movies(config)?;
-        let public_movies_path = config_path!(
+    /// Fails if updating the config fails
+    pub fn full_sync_movies(config: &mut Config, print_json: bool) -> Result<(), GeneralError> {
+        Movies::pre_sync_movies(config)?;
+        Movies::sync_movies(config, print_json)
+    }
+
+    /// Pre sync movies. Used to set the settings
+    ///
+    /// # Errors
+    /// Fails if updating the config fails
+    pub fn pre_sync_movies(config: &mut Config) -> Result<(), GeneralError> {
+        config_path!(config, movies, Movies, file_path, "movies file");
+        config_path!(
             config,
             movies,
             Movies,
             public_file_path,
             "the public file for movies"
         );
+        Ok(())
+    }
+
+    /// Sync the public movie file
+    /// # Errors
+    /// Returns an error if unable to read the movies file
+    pub fn sync_movies(config: &Config, print_json: bool) -> Result<(), GeneralError> {
+        if config.debug > 1 {
+            println!("Syncing movies");
+        }
+        let movies = Movies::get_all_movies(config)?;
+        let public_movies_path = get_config_path!(
+            config,
+            movies,
+            Movies,
+            public_file_path,
+            "the public file for movies"
+        )?;
         let movies_by_date = Movies::group_movies_by_date(&movies);
         // create an hashmap with the date as key and the movies number for that date as value
         let movie_by_date_count: std::collections::HashMap<u64, u64> = movies_by_date

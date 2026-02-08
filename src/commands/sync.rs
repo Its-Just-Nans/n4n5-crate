@@ -97,7 +97,7 @@ impl SyncSubcommand {
         match self {
             Self::All => SyncCliCommand::sync_all(config),
             Self::Music => MusicCliCommand::sync_music(config, Some(true)),
-            Self::Movies { print_json } => Movies::sync_movies(config, print_json),
+            Self::Movies { print_json } => Movies::full_sync_movies(config, print_json),
             Self::Programs => SyncCliCommand::sync_programs(config),
             Self::Settings(settings) => match settings.action {
                 SettingsAction::Add => SyncCliCommand::add_file(config),
@@ -312,7 +312,7 @@ impl SyncCliCommand {
             println!("Syncing all");
         }
         if config.config_data.movies.is_some() {
-            Movies::sync_movies(config, false)?;
+            Movies::full_sync_movies(config, false)?;
             println!();
         }
         if config.config_data.sync.is_some() {
