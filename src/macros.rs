@@ -32,7 +32,7 @@ macro_rules! config_path {
 }
 
 pub(crate) use config_path;
-/// automatically generate the input path
+/// automatically get the input path
 macro_rules! get_config_path {
     ($config:ident, $setting_name: ident, $struct_name: ident, $key_name: ident, $string: expr) => {
         match &$config.config_data.$setting_name {
@@ -92,3 +92,25 @@ macro_rules! config_sub_path {
     }};
 }
 pub(crate) use config_sub_path;
+
+/// automatically get the input path
+macro_rules! get_config_sub_path {
+    ($config:ident, $setting_name: ident, $struct_name: ident, $key_name: ident, $sub_struct_name: ident, $sub_key_name: ident, $string: expr) => {{
+        match &$config.config_data.$setting_name {
+            Some($struct_name {
+                $key_name:
+                    Some($sub_struct_name {
+                        $sub_key_name: Some(path),
+                        ..
+                    }),
+                ..
+            }) => Ok(PathBuf::from(path)),
+            _ => Err(GeneralError::new(concat!(
+                "The path ",
+                $string,
+                " is not set"
+            ))),
+        }
+    }};
+}
+pub(crate) use get_config_sub_path;

@@ -114,7 +114,7 @@ impl Gh {
     /// Save the pulls to the specified file
     /// # Errors
     /// Fails if unable to write to file
-    fn save_pulls(config: &Config) -> Result<(), GeneralError> {
+    pub(crate) fn save_pulls(config: &Config) -> Result<(), GeneralError> {
         let pulls_path = get_config_path!(config, gh, Gh, file_pulls, "pulls file")?;
         println!("Saving pulls to {}", pulls_path.display());
         let mut response_data = GhPageInfo {
@@ -315,7 +315,7 @@ impl Gh {
     /// Save the projects to the specified file
     /// # Errors
     /// Fails if unable to write to file
-    fn save_projects(config: &Config, print_json: bool) -> Result<(), GeneralError> {
+    pub(crate) fn save_projects(config: &Config, print_json: bool) -> Result<(), GeneralError> {
         let projects_path = get_config_path!(config, gh, Gh, file_projects, "projects file")?;
         let projects_path_disk =
             get_config_path!(config, gh, Gh, file_projects_disk, "projects file")?;

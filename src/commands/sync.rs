@@ -8,6 +8,7 @@ use std::{
     io,
     path::PathBuf,
     process::Command,
+    thread,
 };
 
 use clap::{Parser, Subcommand};
@@ -18,7 +19,7 @@ use crate::{
     config::Config,
     config_path, config_sub_path,
     errors::GeneralError,
-    get_config_path,
+    get_config_path, get_config_sub_path,
     utils::{input_no, input_path},
 };
 
@@ -99,7 +100,10 @@ impl SyncSubcommand {
             Self::All => SyncCliCommand::sync_all(config),
             Self::Music => MusicCliCommand::sync_music(config, Some(true)),
             Self::Movies { print_json } => Movies::full_sync_movies(config, print_json),
-            Self::Programs => SyncCliCommand::sync_programs(config),
+            Self::Programs => {
+                SyncCliCommand::pre_sync_programs(config)?;
+                SyncCliCommand::sync_programs(config)
+            }
             Self::Settings(settings) => match settings.action {
                 SettingsAction::Add => SyncCliCommand::add_file(config),
                 SettingsAction::All => {
@@ -212,7 +216,7 @@ impl SyncCliCommand {
     /// Sync the cargo programs
     /// # Errors
     /// Returns an error if the command fails
-    fn sync_programs_cargo(config: &mut Config) -> Result<(), GeneralError> {
+    fn pre_sync_programs_cargo(config: &mut Config) -> Result<(), GeneralError> {
         if !config.use_input {
             return Ok(());
         }
@@ -224,7 +228,7 @@ impl SyncCliCommand {
             return Ok(());
         }
 
-        let cargo_path = config_sub_path!(
+        config_sub_path!(
             config,
             sync,
             SyncCliCommand,
@@ -233,6 +237,21 @@ impl SyncCliCommand {
             cargo_programs,
             "cargo programs"
         );
+        Ok(())
+    }
+    /// Sync the cargo programs
+    /// # Errors
+    /// Returns an error if the command fails
+    fn sync_programs_cargo(config: &Config) -> Result<(), GeneralError> {
+        let cargo_path = get_config_sub_path!(
+            config,
+            sync,
+            SyncCliCommand,
+            programs,
+            ProgramsConfig,
+            cargo_programs,
+            "cargo programs"
+        )?;
         let cargo_programs = Command::new("sh")
             .arg("-c")
             .arg("cargo install --list | grep -v ':$' | sed 's/^ *//'")
@@ -243,10 +262,10 @@ impl SyncCliCommand {
         Ok(())
     }
 
-    /// Sync the nix-env programs
+    /// Pre Sync the nix-env programs
     /// # Errors
     /// Returns an error if the command fails
-    fn sync_programs_nix(config: &mut Config) -> Result<(), GeneralError> {
+    fn pre_sync_programs_nix(config: &mut Config) -> Result<(), GeneralError> {
         if !config.use_input {
             return Ok(());
         }
@@ -258,7 +277,7 @@ impl SyncCliCommand {
             return Ok(());
         }
 
-        let nix_path = config_sub_path!(
+        config_sub_path!(
             config,
             sync,
             SyncCliCommand,
@@ -267,6 +286,22 @@ impl SyncCliCommand {
             nix,
             "nix programs"
         );
+        Ok(())
+    }
+
+    /// Sync the nix-env programs
+    /// # Errors
+    /// Returns an error if the command fails
+    fn sync_programs_nix(config: &Config) -> Result<(), GeneralError> {
+        let nix_path = get_config_sub_path!(
+            config,
+            sync,
+            SyncCliCommand,
+            programs,
+            ProgramsConfig,
+            nix,
+            "nix programs"
+        )?;
         let nix_programs = Command::new("sh")
             .arg("-c")
             .arg("nix-env --query | cut -d'-' -f 1")
@@ -277,10 +312,10 @@ impl SyncCliCommand {
         Ok(())
     }
 
-    /// Sync the vscode extensions
+    /// Pre Sync the vscode extensions
     /// # Errors
     /// Returns an error if the command fails
-    fn sync_programs_vscode(config: &mut Config) -> Result<(), GeneralError> {
+    fn pre_sync_programs_vscode(config: &mut Config) -> Result<(), GeneralError> {
         if !config.use_input {
             return Ok(());
         }
@@ -291,7 +326,7 @@ impl SyncCliCommand {
         {
             return Ok(());
         }
-        let vscode_path = config_sub_path!(
+        config_sub_path!(
             config,
             sync,
             SyncCliCommand,
@@ -300,6 +335,22 @@ impl SyncCliCommand {
             vscode_extensions,
             "vscode extensions"
         );
+        Ok(())
+    }
+
+    /// Sync the vscode extensions
+    /// # Errors
+    /// Returns an error if the command fails
+    fn sync_programs_vscode(config: &Config) -> Result<(), GeneralError> {
+        let vscode_path = get_config_sub_path!(
+            config,
+            sync,
+            SyncCliCommand,
+            programs,
+            ProgramsConfig,
+            vscode_extensions,
+            "vscode extensions"
+        )?;
         let vscode_extensions = Command::new("sh")
             .arg("-c")
             .arg("code --list-extensions")
@@ -310,10 +361,20 @@ impl SyncCliCommand {
         Ok(())
     }
 
+    /// Pre Sync the programs
+    /// # Errors
+    /// Returns an error if any of the subcommands fails
+    fn pre_sync_programs(config: &mut Config) -> Result<(), GeneralError> {
+        SyncCliCommand::pre_sync_programs_cargo(config)?;
+        SyncCliCommand::pre_sync_programs_nix(config)?;
+        SyncCliCommand::pre_sync_programs_vscode(config)?;
+        Ok(())
+    }
+
     /// Sync the programs
     /// # Errors
     /// Returns an error if any of the subcommands fails
-    fn sync_programs(config: &mut Config) -> Result<(), GeneralError> {
+    fn sync_programs(config: &Config) -> Result<(), GeneralError> {
         println!("Syncing programs");
         SyncCliCommand::sync_programs_cargo(config)?;
         SyncCliCommand::sync_programs_nix(config)?;
@@ -329,24 +390,32 @@ impl SyncCliCommand {
         if config.debug > 1 {
             println!("Syncing all");
         }
+
         if config.config_data.movies.is_some() {
             Movies::pre_sync_movies(config)?;
-            Movies::sync_movies(config, false)?;
-            println!();
         }
         if config.config_data.sync.is_some() {
             SyncCliCommand::pre_save_files(config)?;
-            SyncCliCommand::save_files(config)?;
-            println!();
-        }
-        if config.config_data.sync.is_some() {
-            SyncCliCommand::sync_programs(config)?;
-            println!();
+            SyncCliCommand::pre_sync_programs(config)?;
         }
         if config.config_data.gh.is_some() {
             Gh::pre_sync_github(config)?;
-            Gh::sync_github(config, false)?;
         }
+
+        // real sync
+        thread::scope(|s| {
+            if config.config_data.movies.is_some() {
+                s.spawn(|| Movies::sync_movies(config, false));
+            }
+            if config.config_data.sync.is_some() {
+                s.spawn(|| SyncCliCommand::save_files(config));
+                s.spawn(|| SyncCliCommand::sync_programs(config));
+            }
+            if config.config_data.gh.is_some() {
+                s.spawn(|| Gh::save_pulls(config));
+                s.spawn(|| Gh::save_projects(config, false));
+            }
+        });
         Ok(())
     }
 }
