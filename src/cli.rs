@@ -1,5 +1,7 @@
 //! The CLI module
 
+use clap::builder::Styles;
+use clap::builder::styling::{AnsiColor, Effects};
 use clap::{ArgAction, CommandFactory, Parser, Subcommand};
 use clap_complete::{
     generate_to,
@@ -18,10 +20,17 @@ use crate::{
     errors::GeneralError,
 };
 
+/// CLI colors styles
+const STYLES: Styles = Styles::styled()
+    .header(AnsiColor::Green.on_default().effects(Effects::BOLD))
+    .usage(AnsiColor::Green.on_default().effects(Effects::BOLD))
+    .literal(AnsiColor::Cyan.on_default().effects(Effects::BOLD))
+    .placeholder(AnsiColor::Cyan.on_default());
+
 /// Example CLI using clap derive and subcommands
 #[derive(Parser, Debug)]
 #[command(name = "n4n5")]
-#[command(about = "n4n5 CLI", long_about = None)]
+#[command(about = "n4n5 CLI", long_about = None, styles = STYLES)]
 pub struct CliArgs {
     /// Sets a custom config file
     #[arg(long, value_name = "FILE")]
