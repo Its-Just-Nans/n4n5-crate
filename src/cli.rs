@@ -29,8 +29,7 @@ const STYLES: Styles = Styles::styled()
 
 /// Example CLI using clap derive and subcommands
 #[derive(Parser, Debug)]
-#[command(name = "n4n5")]
-#[command(about = "n4n5 CLI", long_about = None, styles = STYLES)]
+#[command(version, name = "n4n5", about = "n4n5 CLI", long_about = None, styles = STYLES)]
 pub struct CliArgs {
     /// Sets a custom config file
     #[arg(long, value_name = "FILE")]

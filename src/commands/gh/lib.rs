@@ -165,7 +165,7 @@ impl Gh {
             }
         }
     }'"
-            .replace("100)", format!("100{add})",).as_str());
+            .replace("100)", format!("100{add})").as_str());
             if config.debug > 0 {
                 println!("Running command:");
                 println!("{command}");

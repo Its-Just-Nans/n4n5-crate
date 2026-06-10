@@ -82,7 +82,7 @@ pub struct OneMovie {
 impl OneMovie {
     /// Display the movie
     pub fn display(&self) -> String {
-        format!("{} - {} ({}) ", self.note, self.title, self.date,)
+        format!("{} - {} ({}) ", self.note, self.title, self.date)
     }
 
     /// Display the movie with comment

@@ -216,7 +216,7 @@ impl UtilsListCrates {
                 documentation,
                 ..
             } = one_crate.krate;
-            let name_with_url = format!("[{}](https://crates.io/crates/{})", &name, &name);
+            let name_with_url = format!("[{name}](https://crates.io/crates/{name})");
             let desc = description.unwrap_or("N/A".to_string());
             let homepage = if let Some(h) = homepage {
                 &format!("<{h}>")
