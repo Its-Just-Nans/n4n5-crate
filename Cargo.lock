@@ -1708,7 +1708,7 @@ dependencies = [
 
 [[package]]
 name = "n4n5"
-version = "1.6.6"
+version = "1.6.7"
 dependencies = [
  "axum",
  "clap",
