@@ -40,6 +40,10 @@ pub enum UtilsSubCommand {
         #[command(subcommand)]
         subcommand: MusicSubcommand,
     },
+
+    /// Quick http server share
+    #[command(name = "share")]
+    Share,
 }
 
 impl UtilsSubCommand {
@@ -56,6 +60,7 @@ impl UtilsSubCommand {
             #[cfg(feature = "galion")]
             UtilsSubCommand::Galion(galion_args) => Self::galion(galion_args),
             UtilsSubCommand::Music { subcommand } => subcommand.invoke(config),
+            UtilsSubCommand::Share => Self::share(),
         }
     }
 
@@ -65,6 +70,28 @@ impl UtilsSubCommand {
     #[cfg(feature = "pngtools")]
     pub fn pngtools() -> Result<(), GeneralError> {
         pngtools::run_cli().map_err(|e| ("Error with pngtools", e))?;
+        Ok(())
+    }
+
+    /// Share main func
+    /// # Errors
+    /// Return error if the sharing server is failing
+    pub(crate) fn share() -> Result<(), GeneralError> {
+        use crate::commands::utils::share::main;
+
+        use tokio::runtime::Runtime;
+
+        let rt = Runtime::new()?;
+        rt.block_on(async {
+            env_logger::builder()
+                .filter_level(log::LevelFilter::Info)
+                .format_target(false)
+                .format_timestamp(None)
+                .init();
+            main()
+                .await
+                .map_err(|e| GeneralError::new_with_source("Error from sharing", e))
+        })?;
         Ok(())
     }
 
