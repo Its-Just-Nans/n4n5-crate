@@ -29,6 +29,7 @@ pub(crate) mod music;
 pub(crate) mod share;
 pub(crate) mod shortcuts;
 pub(crate) mod sync;
+pub(crate) mod watching;
 
 /// Main commands enum
 #[derive(Subcommand, Debug)]
@@ -102,8 +103,10 @@ pub(crate) enum Commands {
     },
 
     /// Quick http server share
-    #[command(name = "share")]
     Share,
+
+    /// List watching repos
+    Watching,
 }
 
 impl Commands {
@@ -148,6 +151,7 @@ impl Commands {
             Commands::Galion(galion_args) => Self::galion(galion_args),
             Commands::Music { subcommand } => subcommand.invoke(config),
             Commands::Share => Self::share(),
+            Commands::Watching => Self::watching(),
         }
     }
 
