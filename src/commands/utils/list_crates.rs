@@ -50,11 +50,11 @@ pub struct UtilsListCrates {
     #[arg(long)]
     filtered: Option<String>,
 
-    /// Filter crates
+    /// Verbose
     #[arg(long, default_value_t = false)]
     verbose: bool,
 
-    /// Filter crates
+    /// Specials crates
     #[arg(long)]
     specials: Option<String>,
 }
@@ -148,7 +148,7 @@ impl UtilsListCrates {
                 }
             }
         } else {
-            table1 = rows.map(|row| row.to_vec()).collect();
+            table1 = rows.map(|row| row[1..].to_vec()).collect();
         }
         let mut buf = String::new();
         let table1 = header.clone().into_iter().chain(table1);
@@ -194,7 +194,12 @@ impl UtilsListCrates {
             .iter()
             .map(|crate_name| Self::get_one_crate(crate_name, self.delay))
             .filter_map(|res| match res {
-                Ok(val) => Some(val),
+                Ok(val) => {
+            if self.verbose {
+                        println!("Fetched {}", val.krate.name);
+                    }
+                    Some(val)}
+                ,
                 Err(err) => {
                     eprintln!("Error fetching crate: {err}");
                     None
