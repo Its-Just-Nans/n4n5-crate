@@ -213,7 +213,8 @@ impl Movies {
             return Ok(());
         }
         println!("Opening movies file at {}", file_path.display());
-        Command::new("vi").arg(&file_path).spawn()?.wait()?;
+        let editor = std::env::var("EDITOR").unwrap_or("vi".to_string());
+        Command::new(editor).arg(&file_path).spawn()?.wait()?;
         Ok(())
     }
 

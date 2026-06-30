@@ -2,7 +2,7 @@
 
 use clap::Subcommand;
 
-use crate::{commands::utils::lib::UtilsSubCommand, errors::GeneralError};
+use crate::errors::GeneralError;
 
 /// Shortcuts related subcommands
 #[derive(Subcommand, Debug, Clone)]
@@ -22,14 +22,16 @@ impl ShortcutsSubcommand {
         match self {
             #[cfg(feature = "git-mover")]
             ShortcutsSubcommand::SyncGit => {
+                use crate::commands::Commands;
                 use git_mover::PlatformType;
+
                 let git_mover_inst = git_mover::GitMoverCli {
                     source: Some(PlatformType::Github),
                     destination: Some(PlatformType::Codeberg),
                     manual: true,
                     ..Default::default()
                 };
-                UtilsSubCommand::git_mover(git_mover_inst)
+                Commands::git_mover(git_mover_inst)
             }
         }
     }

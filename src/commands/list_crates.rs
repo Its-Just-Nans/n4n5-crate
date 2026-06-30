@@ -1,18 +1,16 @@
 //! [`list_crates`] function
 
+use clap::Parser;
+use reqwest::blocking::Client;
+use serde::{Deserialize, Serialize};
 use std::{fmt::Write, fs, path::PathBuf, thread, time::Duration, vec};
 
 use crate::{
-    commands::{
-        gh::lib::get_github_username,
-        utils::types::{CrateData, CrateInnerData, CrateResponse, UserResponse},
-    },
+    commands::gh::lib::get_github_username,
     config::Config,
     errors::GeneralError,
     utils::{pretty_print, table_to_markdown_table},
 };
-use clap::Parser;
-use reqwest::blocking::Client;
 
 /// Get user agent
 fn get_user_agent() -> String {
@@ -22,7 +20,7 @@ fn get_user_agent() -> String {
 /// A simple CLI example
 #[derive(Parser, Debug, Clone)]
 #[command(name = "list_crates")]
-pub struct UtilsListCrates {
+pub struct ListCrates {
     /// Specify username
     #[arg(long, default_value_t = get_github_username())]
     username: String,
@@ -59,7 +57,7 @@ pub struct UtilsListCrates {
     specials: Option<String>,
 }
 
-impl UtilsListCrates {
+impl ListCrates {
     /// Get all crates name
     /// # Errors
     /// Error if request fails
@@ -281,4 +279,55 @@ impl UtilsListCrates {
         let crate_data: CrateData = serde_json::from_str(&response)?;
         Ok(crate_data)
     }
+}
+
+/// User Response
+#[derive(Debug, Deserialize)]
+pub(crate) struct UserResponse {
+    /// User definition
+    pub user: Option<User>,
+}
+
+/// User type
+#[derive(Debug, Deserialize)]
+pub(crate) struct User {
+    /// Id of user
+    pub id: i64,
+}
+
+/// Crates info list
+#[derive(Debug, Deserialize)]
+pub(crate) struct CrateResponse {
+    /// crates list
+    pub crates: Vec<CrateInfo>,
+}
+
+/// crate info
+#[derive(Debug, Deserialize)]
+pub(crate) struct CrateInfo {
+    /// Id of crate
+    pub id: String,
+}
+
+/// crate data from crates.io
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct CrateData {
+    /// inner crate data
+    #[serde(rename = "crate")]
+    pub krate: CrateInnerData,
+}
+
+/// Crate inner data
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct CrateInnerData {
+    /// crate name
+    pub name: String,
+    /// repository url
+    pub repository: Option<String>,
+    /// homepage url
+    pub homepage: Option<String>,
+    /// documentation url
+    pub documentation: Option<String>,
+    /// description
+    pub description: Option<String>,
 }

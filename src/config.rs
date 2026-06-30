@@ -1,7 +1,7 @@
 //! Configuration module
 
 use crate::{
-    commands::{gh::lib::Gh, movies::Movies, sync::SyncCliCommand, utils::music::MusicCliCommand},
+    commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand},
     errors::GeneralError,
 };
 use home::home_dir;

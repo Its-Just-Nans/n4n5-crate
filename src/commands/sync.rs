@@ -23,7 +23,7 @@ use crate::{
     utils::{input_no, input_path},
 };
 
-use super::{movies::Movies, utils::music::MusicCliCommand};
+use super::{movies::Movies, music::MusicCliCommand};
 
 /// Movies configuration
 #[derive(Deserialize, Serialize, Default)]

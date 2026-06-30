@@ -82,7 +82,8 @@ impl MusicCliCommand {
             return Ok(());
         }
         println!("Opening music file at {}", music_file.display());
-        Command::new("vi").arg(&music_file).spawn()?.wait()?;
+        let editor = std::env::var("EDITOR").unwrap_or("vi".to_string());
+        Command::new(editor).arg(&music_file).spawn()?.wait()?;
         Ok(())
     }
 
