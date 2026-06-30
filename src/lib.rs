@@ -27,7 +27,6 @@ pub mod config;
 pub mod errors;
 pub(crate) mod macros;
 pub(crate) use macros::{config_path, get_config_path};
-pub(crate) use macros::{config_sub_path, get_config_sub_path};
 pub(crate) mod utils;
 
 pub use cli::cli_main;

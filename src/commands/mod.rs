@@ -10,10 +10,7 @@ use std::fs::create_dir_all;
 
 use crate::{cli::CliArgs, commands::list_crates::ListCrates};
 use crate::{
-    commands::{
-        gh::lib::GhSubCommand, movies::MoviesSubCommand, shortcuts::ShortcutsSubcommand,
-        sync::SyncSubcommand,
-    },
+    commands::{gh::lib::GhSubCommand, movies::MoviesSubCommand, shortcuts::ShortcutsSubcommand},
     config::Config,
     errors::GeneralError,
 };
@@ -28,7 +25,6 @@ pub(crate) mod movies;
 pub(crate) mod music;
 pub(crate) mod share;
 pub(crate) mod shortcuts;
-pub(crate) mod sync;
 pub(crate) mod watching;
 
 /// Main commands enum
@@ -53,13 +49,6 @@ pub(crate) enum Commands {
         /// list of subcommands
         #[command(subcommand)]
         subcommand: MoviesSubCommand,
-    },
-
-    /// sync subcommand
-    Sync {
-        /// list of subcommands
-        #[command(subcommand)]
-        subcommand: SyncSubcommand,
     },
 
     /// generate completions
@@ -137,10 +126,9 @@ impl Commands {
             Commands::Config { subcommand } => subcommand.invoke(config),
             Commands::Gh { subcommand } => subcommand.invoke(config),
             Commands::Movies { subcommand } => subcommand.invoke(config),
-            Commands::Sync { subcommand } => subcommand.invoke(config),
             Commands::Completions => Commands::gen_completions(config),
             Commands::Man => Commands::gen_man(config),
-            Commands::Shortcuts { subcommand } => subcommand.run(),
+            Commands::Shortcuts { subcommand } => subcommand.run(config),
             Commands::ListCrates(subcommand) => subcommand.list_crates(config),
 
             #[cfg(feature = "pngtools")]

@@ -20,7 +20,12 @@ impl Commands {
         let outdir = outdir.join(".config").join(".n4n5").join("man");
         create_dir_all(&outdir)?;
 
-        man_generate_to(cmd, outdir)?;
+        man_generate_to(cmd, &outdir)?;
+        println!(
+            "Generated man to {}{}",
+            outdir.display(),
+            std::path::MAIN_SEPARATOR
+        );
         Ok(())
     }
 }

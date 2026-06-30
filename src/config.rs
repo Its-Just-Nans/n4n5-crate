@@ -1,7 +1,7 @@
 //! Configuration module
 
 use crate::{
-    commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand, sync::SyncCliCommand},
+    commands::{gh::lib::Gh, movies::Movies, music::MusicCliCommand},
     errors::GeneralError,
 };
 use home::home_dir;
@@ -35,9 +35,6 @@ pub struct Config {
 pub struct ConfigData {
     /// Movies configuration
     pub movies: Option<Movies>,
-
-    /// Sync configuration
-    pub sync: Option<SyncCliCommand>,
 
     /// Github configuration
     pub gh: Option<Gh>,
