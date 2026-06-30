@@ -195,11 +195,11 @@ impl UtilsListCrates {
             .map(|crate_name| Self::get_one_crate(crate_name, self.delay))
             .filter_map(|res| match res {
                 Ok(val) => {
-            if self.verbose {
+                    if self.verbose {
                         println!("Fetched {}", val.krate.name);
                     }
-                    Some(val)}
-                ,
+                    Some(val)
+                }
                 Err(err) => {
                     eprintln!("Error fetching crate: {err}");
                     None

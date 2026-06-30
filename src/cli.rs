@@ -184,7 +184,8 @@ impl ConfigSubcommand {
             return Ok(());
         }
         println!("Opening config {}", config_path.display());
-        Command::new("vi").arg(config_path).spawn()?.wait()?;
+        let editor = std::env::var("EDITOR").unwrap_or("vi".to_string());
+        Command::new(editor).arg(config_path).spawn()?.wait()?;
         Ok(())
     }
 }
