@@ -17,9 +17,11 @@ use std::{
 /// It's linked to a configuration file
 pub struct Config {
     /// path to the configuration file
+    #[allow(clippy::struct_field_names)]
     pub config_path: PathBuf,
 
     /// actual configuration data
+    #[allow(clippy::struct_field_names)]
     pub config_data: ConfigData,
 
     /// Turn debugging information on

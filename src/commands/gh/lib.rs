@@ -93,15 +93,6 @@ impl Gh {
         Gh::pre_save_projects(config)?;
         Ok(())
     }
-    /// Sync the github data
-    /// # Errors
-    /// Fails if unable to save the pulls or projects
-    pub fn sync_github(config: &Config, is_json: bool) -> Result<(), GeneralError> {
-        println!("Syncing github data");
-        Gh::save_pulls(config)?;
-        Gh::save_projects(config, is_json)?;
-        Ok(())
-    }
 
     /// Pre Save the pulls
     /// # Errors

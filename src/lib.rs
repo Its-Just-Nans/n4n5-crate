@@ -23,7 +23,7 @@
 
 pub(crate) mod cli;
 pub(crate) mod commands;
-pub mod config;
+pub(crate) mod config;
 pub mod errors;
 pub(crate) mod macros;
 pub(crate) use macros::{config_path, get_config_path};
