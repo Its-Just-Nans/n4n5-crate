@@ -28,8 +28,6 @@ struct AppState {
 /// # Errors
 /// Return error if the server fails
 pub async fn cli_main() -> std::io::Result<()> {
-    fs::create_dir_all(UPLOAD_DIR)?;
-
     let state = Arc::new(AppState {
         upload_dir: UPLOAD_DIR.to_string(),
     });
@@ -125,33 +123,55 @@ async fn upload(
     mut multipart: Multipart,
 ) -> impl IntoResponse {
     loop {
-        let Ok(new_field) = multipart.next_field().await else {
-            continue;
+        let new_field = match multipart.next_field().await {
+            Ok(f) => f,
+            Err(err) => {
+                let msg = "Error reading multipart field";
+                eprintln!("{} - {msg}: {err}", addr.ip());
+                return (StatusCode::BAD_REQUEST, msg).into_response();
+            }
         };
         let Some(field) = new_field else {
             break;
         };
         let name = match field.file_name() {
-            Some(n) => n.to_string(),
+            Some(n) => sanitize(n),
             None => continue,
         };
+
+        if name.is_empty() {
+            let msg = "Empty file name";
+            eprintln!("{} - {msg}", addr.ip());
+            return (StatusCode::BAD_REQUEST, msg).into_response();
+        }
         let data = match field.bytes().await {
             Ok(data) => data,
             Err(e) => {
-                eprintln!("{e:?}");
-                return StatusCode::BAD_REQUEST.into_response();
+                eprintln!("{} - Failed to read bytes of {name}: {e}", addr.ip());
+                return (
+                    StatusCode::BAD_REQUEST,
+                    "Failed to read bytes - file too big?",
+                )
+                    .into_response();
             }
         };
-        let path = format!("{}/{}", state.upload_dir, sanitize(&name));
+        let path = format!("{}/{}", state.upload_dir, name);
 
-        println!(
-            "Receiving from {}: {path} - {} bytes",
-            addr.ip(),
-            data.len()
-        );
-        match tokio_fs::write(path, data).await {
+        println!("{}: receiving {path}: {} bytes", addr.ip(), data.len());
+        if let Err(err) = fs::create_dir_all(&state.upload_dir) {
+            eprintln!(
+                "Failed to create the upload folder {}: {err}",
+                state.upload_dir
+            );
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+        match tokio_fs::write(&path, data).await {
             Ok(b) => b,
-            Err(_) => return StatusCode::BAD_REQUEST.into_response(),
+            Err(err) => {
+                let msg = format!("Failed to write {path}");
+                eprintln!("{} - {msg}: {err}", addr.ip());
+                return (StatusCode::BAD_REQUEST, msg).into_response();
+            }
         }
     }
     Redirect::to("/").into_response()
