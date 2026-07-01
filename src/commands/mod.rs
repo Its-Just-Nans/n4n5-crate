@@ -23,7 +23,6 @@ pub(crate) mod list_crates;
 pub(crate) mod man;
 pub(crate) mod movies;
 pub(crate) mod music;
-pub(crate) mod share;
 pub(crate) mod shortcuts;
 pub(crate) mod watching;
 
@@ -156,8 +155,6 @@ impl Commands {
     /// # Errors
     /// Return error if the sharing server is failing
     pub(crate) fn share() -> Result<(), GeneralError> {
-        use crate::commands::share::main;
-
         use tokio::runtime::Runtime;
 
         let rt = Runtime::new()?;
@@ -167,7 +164,7 @@ impl Commands {
                 .format_target(false)
                 .format_timestamp(None)
                 .init();
-            main()
+            n4n5_share::cli_main()
                 .await
                 .map_err(|e| GeneralError::new_with_source("Error from sharing", e))
         })?;

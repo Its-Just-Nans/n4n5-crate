@@ -1710,7 +1710,6 @@ dependencies = [
 name = "n4n5"
 version = "1.6.7"
 dependencies = [
- "axum",
  "clap",
  "clap_complete",
  "clap_mangen",
@@ -1719,14 +1718,23 @@ dependencies = [
  "git-mover",
  "home",
  "log",
- "mime_guess",
  "music-exporter",
+ "n4n5-share",
  "pngtools",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
  "tokio",
  "toml 1.1.2+spec-1.1.0",
+]
+
+[[package]]
+name = "n4n5-share"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "mime_guess",
+ "tokio",
 ]
 
 [[package]]

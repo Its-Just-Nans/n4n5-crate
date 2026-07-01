@@ -2,13 +2,13 @@
 
 use axum::{
     Router,
-    extract::{Multipart, State},
+    extract::{ConnectInfo, DefaultBodyLimit, Multipart, State},
     http::{StatusCode, header},
     response::{Html, IntoResponse, Redirect, Response},
     routing::{get, post},
 };
 use mime_guess::from_path;
-use std::fmt::Write;
+use std::{fmt::Write, net::SocketAddr};
 use std::{fs, net::UdpSocket, sync::Arc};
 use tokio::fs as tokio_fs;
 
@@ -27,7 +27,7 @@ struct AppState {
 /// main share function
 /// # Errors
 /// Return error if the server fails
-pub(crate) async fn main() -> std::io::Result<()> {
+pub async fn cli_main() -> std::io::Result<()> {
     fs::create_dir_all(UPLOAD_DIR)?;
 
     let state = Arc::new(AppState {
@@ -38,6 +38,7 @@ pub(crate) async fn main() -> std::io::Result<()> {
         .route("/", get(index))
         .route("/upload", post(upload))
         .route("/files/{name}", get(download))
+        .layer(DefaultBodyLimit::max(128 * 1024 * 1024)) // 128Mib
         .with_state(state);
 
     let addr = format!("0.0.0.0:{PORT}");
@@ -52,7 +53,11 @@ pub(crate) async fn main() -> std::io::Result<()> {
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
     Ok(())
 }
 
@@ -84,6 +89,7 @@ async fn index() -> Html<String> {
 <head>
 <meta charset="utf-8">
 <title>Upload Server</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body {{ font-family: Arial; background:#f3f3f3; margin:40px; }}
 .container {{ max-width:700px; margin:auto; background:white; padding:20px; border-radius:10px; }}
@@ -92,7 +98,7 @@ body {{ font-family: Arial; background:#f3f3f3; margin:40px; }}
 </head>
 <body>
 <div class="container">
-<h2>📁 File Upload Server</h2>
+<h2>📁 File Upload Server - uses HTTP (without S)</h2>
 
 <form action="/upload" method="post" enctype="multipart/form-data">
 <div class="drop">
@@ -102,7 +108,7 @@ body {{ font-family: Arial; background:#f3f3f3; margin:40px; }}
 </form>
 
 <h3>Files</h3>
-<ul>
+<ul style="overflow-wrap: break-word;">
 {files_html}
 </ul>
 </div>
@@ -113,22 +119,36 @@ body {{ font-family: Arial; background:#f3f3f3; margin:40px; }}
 }
 
 /// Upload function
-async fn upload(State(state): State<Arc<AppState>>, mut multipart: Multipart) -> impl IntoResponse {
+async fn upload(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    State(state): State<Arc<AppState>>,
+    mut multipart: Multipart,
+) -> impl IntoResponse {
     loop {
-        let Ok(Some(field)) = multipart.next_field().await else {
+        let Ok(new_field) = multipart.next_field().await else {
+            continue;
+        };
+        let Some(field) = new_field else {
             break;
         };
         let name = match field.file_name() {
             Some(n) => n.to_string(),
             None => continue,
         };
-
-        let Ok(data) = field.bytes().await else {
-            return StatusCode::BAD_REQUEST.into_response();
+        let data = match field.bytes().await {
+            Ok(data) => data,
+            Err(e) => {
+                eprintln!("{e:?}");
+                return StatusCode::BAD_REQUEST.into_response();
+            }
         };
-
         let path = format!("{}/{}", state.upload_dir, sanitize(&name));
 
+        println!(
+            "Receiving from {}: {path} - {} bytes",
+            addr.ip(),
+            data.len()
+        );
         match tokio_fs::write(path, data).await {
             Ok(b) => b,
             Err(_) => return StatusCode::BAD_REQUEST.into_response(),
@@ -138,8 +158,12 @@ async fn upload(State(state): State<Arc<AppState>>, mut multipart: Multipart) ->
 }
 
 /// Show files uploaded
-async fn download(axum::extract::Path(name): axum::extract::Path<String>) -> impl IntoResponse {
+async fn download(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    axum::extract::Path(name): axum::extract::Path<String>,
+) -> impl IntoResponse {
     let path = format!("{UPLOAD_DIR}/{}", sanitize(&name));
+    eprintln!("{} is downloading {path}", addr.ip());
     match tokio_fs::read(&path).await {
         Ok(data) => {
             let mime = from_path(&path).first_or_octet_stream();
