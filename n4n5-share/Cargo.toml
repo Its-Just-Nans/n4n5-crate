@@ -2,6 +2,14 @@
 name = "n4n5-share"
 version = "1.0.0"
 edition = "2024"
+description = "n4n5 share - quick file sharing"
+documentation = "https://docs.rs/n4n5-share"
+license = "MIT"
+readme = "./README.md"
+keywords = ["utility"]
+categories = ["command-line-utilities"]
+repository = "https://github.com/Its-Just-Nans/n4n5-crate"
+homepage = "https://github.com/Its-Just-Nans/n4n5-crate"
 
 [dependencies]
 tokio = { version = "1.52", features = ["rt-multi-thread", "fs"] }
