@@ -1,6 +1,6 @@
 [package]
 name = "n4n5"
-version = "1.6.7"
+version = "1.6.8"
 edition = "2024"
 description = "n4n5's utility crate"
 documentation = "https://docs.rs/n4n5"
@@ -27,7 +27,8 @@ reqwest = { version = "0.13.4", features = ["blocking", "json"] }
 pngtools = { version = "1.1.0", optional = true }
 galion = { version = "0.7.8", optional = true }
 git-mover = { version = "1.2.3", optional = true }
-n4n5-share = { path = "./n4n5-share/" }
+n4n5-share = { version = "1.0.0" }
+# n4n5-share = { path = "./n4n5-share/" }
 
 [features]
 default = ["git-mover"]

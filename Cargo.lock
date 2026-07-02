@@ -1708,7 +1708,7 @@ dependencies = [
 
 [[package]]
 name = "n4n5"
-version = "1.6.7"
+version = "1.6.8"
 dependencies = [
  "clap",
  "clap_complete",
@@ -1730,7 +1730,9 @@ dependencies = [
 
 [[package]]
 name = "n4n5-share"
-version = "0.1.0"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6b7d5f2abfce61a02eb2cc05ad9ea3fcc205970a5455ba25bc75733db0fc08a"
 dependencies = [
  "axum",
  "mime_guess",
