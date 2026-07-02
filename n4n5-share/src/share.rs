@@ -42,7 +42,7 @@ pub async fn cli_main() -> std::io::Result<()> {
     let addr = format!("0.0.0.0:{PORT}");
 
     println!("==================================================");
-    println!(" Axum File Upload Server");
+    println!(" File Upload Server");
     println!("==================================================");
     println!("Localhost : http://localhost:{PORT}");
     println!("Loopback  : http://127.0.0.1:{PORT}");

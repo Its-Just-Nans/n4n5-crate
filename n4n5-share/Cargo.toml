@@ -1,10 +1,10 @@
 [package]
 name = "n4n5-share"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 
 [dependencies]
-tokio = { version = "1.52", features = ["full"] }
+tokio = { version = "1.52", features = ["rt-multi-thread", "fs"] }
 axum = { version = "0.8.9", features = ["multipart"] }
 mime_guess = "2.0.5"
 
