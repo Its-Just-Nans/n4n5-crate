@@ -14,7 +14,7 @@ pub(crate) enum ShortcutsSubcommand {
     SyncGit,
 
     /// Sync all
-    #[command(alias = "s")]
+    #[command(visible_alias = "s")]
     SyncAll,
 }
 

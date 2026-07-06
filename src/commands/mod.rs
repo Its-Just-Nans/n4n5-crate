@@ -54,7 +54,7 @@ pub(crate) enum Commands {
     Completions,
 
     /// Shortcuts subcommand
-    #[command(alias = "s")]
+    #[command(visible_alias = "s")]
     Shortcuts {
         /// list of subcommands
         #[command(subcommand)]
