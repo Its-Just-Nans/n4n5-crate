@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post},
 };
 use mime_guess::from_path;
-use std::{fmt::Write, net::SocketAddr};
+use std::{fmt::Write, net::SocketAddr, time::SystemTime};
 use std::{fs, net::UdpSocket, sync::Arc};
 use tokio::fs as tokio_fs;
 
@@ -104,6 +104,13 @@ body {{ font-family: Arial; background:#f3f3f3; margin:40px; }}
 </div>
 <button type="submit">Upload</button>
 </form>
+<details>
+<summary>Text upload </summary>
+<form action="/upload" method="post" enctype="multipart/form-data">
+<input type="text" name="file">
+<button type="submit">Upload</button>
+</form>
+</details>
 
 <h3>Files</h3>
 <ul style="overflow-wrap: break-word;">
@@ -134,9 +141,14 @@ async fn upload(
         let Some(field) = new_field else {
             break;
         };
-        let name = match field.file_name() {
-            Some(n) => sanitize(n),
-            None => continue,
+        let name = if let Some(n) = field.file_name() {
+            sanitize(n)
+        } else {
+            let duration = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+                Ok(n) => format!("{}", n.as_secs()),
+                Err(_e) => "no_timestamp".to_string(),
+            };
+            format!("text_{duration}.txt")
         };
 
         if name.is_empty() {
@@ -165,10 +177,15 @@ async fn upload(
             );
             return StatusCode::INTERNAL_SERVER_ERROR.into_response();
         }
+        if tokio_fs::try_exists(&path).await.is_ok_and(|res| res) {
+            let msg = format!("Path already exists: '{path}'");
+            eprintln!("{} - {msg}", addr.ip());
+            return (StatusCode::BAD_REQUEST, msg).into_response();
+        }
         match tokio_fs::write(&path, data).await {
             Ok(b) => b,
             Err(err) => {
-                let msg = format!("Failed to write {path}");
+                let msg = format!("Failed to write '{path}'");
                 eprintln!("{} - {msg}: {err}", addr.ip());
                 return (StatusCode::BAD_REQUEST, msg).into_response();
             }
