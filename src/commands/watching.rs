@@ -9,7 +9,10 @@ use crate::errors::GeneralError;
 /// Helper to run a `Command`
 /// # Errors
 /// Return error if the command fails
-fn run(cmd: &str, args: &[&str]) -> Result<String, String> {
+fn run(cmd: &str, args: &[&str], debug: bool) -> Result<String, String> {
+    if debug {
+        println!("{} {}", cmd, args.join(" "));
+    }
     let output: Output = Command::new(cmd)
         .args(args)
         .output()
@@ -40,10 +43,9 @@ impl Commands {
     /// Watching
     /// # Errors
     /// Returns errors if the request fails
-    pub(crate) fn watching() -> Result<(), GeneralError> {
+    pub(crate) fn watching(debug: bool) -> Result<(), GeneralError> {
         let username = "Its-Just-Nans";
 
-        println!("Repositories you are watching:");
 
         let watched_raw = run(
             "gh",
@@ -56,11 +58,15 @@ impl Commands {
                 ".[].full_name",
                 "--paginate",
             ],
+            debug
         )?;
+        if watched_raw.is_empty(){
+            return Err(GeneralError::new(format!("/users/{username}/subscriptions is empty - weird")));
+        }
+        println!("Repositories you are watching:");
         println!("{watched_raw}");
         let watched = split_lines(&watched_raw);
 
-        println!("All your repositories (excluding forks):");
 
         let all_raw = run(
             "gh",
@@ -76,16 +82,18 @@ impl Commands {
                 "-q",
                 ".[] | select(.isFork==false) | .nameWithOwner",
             ],
+            debug
         )?;
 
+        println!("All your repositories (excluding forks):");
         println!("{all_raw}");
         let all = split_lines(&all_raw);
 
-        println!("Repositories you own (not forks) but are NOT watching:");
 
         let mut not_watching: Vec<_> = all.difference(&watched).cloned().collect();
         not_watching.sort();
 
+        println!("Repositories you own (not forks) but are NOT watching:");
         for repo in not_watching {
             println!("{repo}");
         }

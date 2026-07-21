@@ -138,7 +138,7 @@ impl Commands {
             Commands::Galion(galion_args) => Self::galion(galion_args),
             Commands::Music { subcommand } => subcommand.invoke(config),
             Commands::Share => Self::share(),
-            Commands::Watching => Self::watching(),
+            Commands::Watching => Self::watching(config.debug > 0),
         }
     }
 
