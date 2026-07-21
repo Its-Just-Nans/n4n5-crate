@@ -46,7 +46,6 @@ impl Commands {
     pub(crate) fn watching(debug: bool) -> Result<(), GeneralError> {
         let username = "Its-Just-Nans";
 
-
         let watched_raw = run(
             "gh",
             &[
@@ -58,15 +57,16 @@ impl Commands {
                 ".[].full_name",
                 "--paginate",
             ],
-            debug
+            debug,
         )?;
-        if watched_raw.is_empty(){
-            return Err(GeneralError::new(format!("/users/{username}/subscriptions is empty - weird")));
+        if watched_raw.is_empty() {
+            return Err(GeneralError::new(format!(
+                "/users/{username}/subscriptions is empty - weird"
+            )));
         }
         println!("Repositories you are watching:");
         println!("{watched_raw}");
         let watched = split_lines(&watched_raw);
-
 
         let all_raw = run(
             "gh",
@@ -82,13 +82,12 @@ impl Commands {
                 "-q",
                 ".[] | select(.isFork==false) | .nameWithOwner",
             ],
-            debug
+            debug,
         )?;
 
         println!("All your repositories (excluding forks):");
         println!("{all_raw}");
         let all = split_lines(&all_raw);
-
 
         let mut not_watching: Vec<_> = all.difference(&watched).cloned().collect();
         not_watching.sort();
