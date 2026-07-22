@@ -20,23 +20,14 @@ fn run(cmd: &str, args: &[&str], debug: bool) -> Result<String, String> {
 
     if !output.status.success() {
         return Err(format!(
-            "command failed: {} {:?}\n{}",
+            "command failed: {} {}\n{}",
             cmd,
-            args,
+            args.join(" "),
             String::from_utf8_lossy(&output.stderr)
         ));
     }
 
     String::from_utf8(output.stdout).map_err(|e| format!("invalid UTF-8 output from {cmd}: {e}"))
-}
-
-/// Helper to split lines
-fn split_lines(s: &str) -> HashSet<String> {
-    s.lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty())
-        .map(String::from)
-        .collect()
 }
 
 impl Commands {
@@ -45,28 +36,6 @@ impl Commands {
     /// Returns errors if the request fails
     pub(crate) fn watching(debug: bool) -> Result<(), GeneralError> {
         let username = "Its-Just-Nans";
-
-        let watched_raw = run(
-            "gh",
-            &[
-                "api",
-                "-X",
-                "GET",
-                &format!("/users/{username}/subscriptions"),
-                "-q",
-                ".[].full_name",
-                "--paginate",
-            ],
-            debug,
-        )?;
-        if watched_raw.is_empty() {
-            return Err(GeneralError::new(format!(
-                "/users/{username}/subscriptions is empty - weird"
-            )));
-        }
-        println!("Repositories you are watching:");
-        println!("{watched_raw}");
-        let watched = split_lines(&watched_raw);
 
         let all_raw = run(
             "gh",
@@ -85,13 +54,32 @@ impl Commands {
             debug,
         )?;
 
-        println!("All your repositories (excluding forks):");
-        println!("{all_raw}");
-        let all = split_lines(&all_raw);
+        let mut not_watching = HashSet::new();
+        let prefix = format!("{username}/");
+        for repo_link in all_raw.lines() {
+            let repo = repo_link.strip_prefix(&prefix).unwrap_or(repo_link);
 
-        let mut not_watching: Vec<_> = all.difference(&watched).cloned().collect();
-        not_watching.sort();
+            let subscribers: String = run(
+                "gh",
+                &[
+                    "api",
+                    &format!("/repos/{username}/{repo}/subscribers"),
+                    "--paginate",
+                    "-q",
+                    ".[].login",
+                ],
+                debug,
+            )?;
 
+            let owner_is_subscriber = subscribers.lines().any(|login| login == username);
+
+            println!("{repo_link:<45} {owner_is_subscriber}");
+            if !owner_is_subscriber {
+                not_watching.insert(repo_link.to_string());
+            }
+        }
+
+        println!();
         println!("Repositories you own (not forks) but are NOT watching:");
         for repo in not_watching {
             println!("{repo}");
