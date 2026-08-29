@@ -1708,7 +1708,7 @@ dependencies = [
 
 [[package]]
 name = "n4n5"
-version = "1.6.8"
+version = "1.6.9"
 dependencies = [
  "clap",
  "clap_complete",
