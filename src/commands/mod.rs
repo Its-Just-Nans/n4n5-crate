@@ -92,6 +92,8 @@ pub(crate) enum Commands {
 
     /// Quick http server share
     Share,
+    /// Quick OCR server
+    Ocr,
 
     /// List watching repos
     Watching,
@@ -138,6 +140,7 @@ impl Commands {
             Commands::Galion(galion_args) => Self::galion(galion_args),
             Commands::Music { subcommand } => subcommand.invoke(config),
             Commands::Share => Self::share(),
+            Commands::Ocr => Self::ocr(),
             Commands::Watching => Self::watching(config.debug > 0),
         }
     }
@@ -167,6 +170,26 @@ impl Commands {
             n4n5_share::cli_main()
                 .await
                 .map_err(|e| GeneralError::new_with_source("Error from sharing", e))
+        })?;
+        Ok(())
+    }
+
+    /// OCR main func
+    /// # Errors
+    /// Return error if the ocr server is failing
+    pub(crate) fn ocr() -> Result<(), GeneralError> {
+        use tokio::runtime::Runtime;
+
+        let rt = Runtime::new()?;
+        rt.block_on(async {
+            env_logger::builder()
+                .filter_level(log::LevelFilter::Info)
+                .format_target(false)
+                .format_timestamp(None)
+                .init();
+            n4n5_ocr::cli_main()
+                .await
+                .map_err(|e| GeneralError::new_with_source("Error from ocr", e))
         })?;
         Ok(())
     }
