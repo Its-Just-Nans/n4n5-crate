@@ -70,10 +70,10 @@ fn local_ip() -> std::io::Result<String> {
 }
 
 /// Show the index
-async fn index() -> Html<String> {
+async fn index(State(state): State<Arc<AppState>>) -> Html<String> {
     let mut files_html = String::new();
 
-    if let Ok(entries) = fs::read_dir(UPLOAD_DIR) {
+    if let Ok(entries) = fs::read_dir(&state.upload_dir) {
         for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().to_string();
             let _ = write!(files_html, "<li><a href=\"/files/{name}\">{name}</a></li>");
