@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post},
 };
 use mime_guess::from_path;
-use std::{fmt::Write, net::SocketAddr, time::SystemTime};
+use std::{fmt::Write, net::SocketAddr, path::PathBuf, time::SystemTime};
 use std::{fs, net::UdpSocket, sync::Arc};
 use tokio::fs as tokio_fs;
 
@@ -21,7 +21,7 @@ const PORT: u16 = 8000;
 #[derive(Clone)]
 struct AppState {
     /// Upload dir
-    upload_dir: String,
+    upload_dir: PathBuf,
 }
 
 /// main share function
@@ -29,7 +29,7 @@ struct AppState {
 /// Return error if the server fails
 pub async fn cli_main() -> std::io::Result<()> {
     let state = Arc::new(AppState {
-        upload_dir: UPLOAD_DIR.to_string(),
+        upload_dir: PathBuf::from(UPLOAD_DIR),
     });
 
     let app = Router::new()
@@ -167,25 +167,30 @@ async fn upload(
                     .into_response();
             }
         };
-        let path = format!("{}/{}", state.upload_dir, name);
+        let path = state.upload_dir.join(name);
 
-        println!("{}: receiving {path}: {} bytes", addr.ip(), data.len());
+        println!(
+            "{}: receiving {}: {} bytes",
+            addr.ip(),
+            path.display(),
+            data.len()
+        );
         if let Err(err) = fs::create_dir_all(&state.upload_dir) {
             eprintln!(
                 "Failed to create the upload folder {}: {err}",
-                state.upload_dir
+                state.upload_dir.display()
             );
             return StatusCode::INTERNAL_SERVER_ERROR.into_response();
         }
         if tokio_fs::try_exists(&path).await.is_ok_and(|res| res) {
-            let msg = format!("Path already exists: '{path}'");
+            let msg = format!("Path already exists: '{}'", path.display());
             eprintln!("{} - {msg}", addr.ip());
             return (StatusCode::BAD_REQUEST, msg).into_response();
         }
         match tokio_fs::write(&path, data).await {
             Ok(b) => b,
             Err(err) => {
-                let msg = format!("Failed to write '{path}'");
+                let msg = format!("Failed to write '{}'", path.display());
                 eprintln!("{} - {msg}: {err}", addr.ip());
                 return (StatusCode::BAD_REQUEST, msg).into_response();
             }
