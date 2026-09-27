@@ -300,7 +300,6 @@ name = "n4n5-ocr"
 version = "1.0.0"
 dependencies = [
  "axum",
- "serde_json",
  "tokio",
 ]
 

@@ -1,5 +1,4 @@
 //! Sharing web server
-
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
@@ -7,13 +6,13 @@ use std::{fs, net::UdpSocket, sync::Arc};
 use std::{net::SocketAddr, time::SystemTime};
 
 use axum::{
-    Json, Router,
+    Router,
     extract::{ConnectInfo, DefaultBodyLimit, Multipart, State},
     http::StatusCode,
     response::{Html, IntoResponse},
     routing::{get, post},
 };
-use serde_json::json;
+use docling::SourceDocument;
 use tokio::fs as tokio_fs;
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
@@ -79,41 +78,46 @@ fn local_ip() -> std::io::Result<String> {
     Ok(ip)
 }
 
-/// Show the index
-async fn index() -> Html<String> {
-    Html(
+/// INDEX template
+fn fill_template(content: &str) -> String {
+    format!(
         r#"
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<title>Upload Server</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body { font-family: Arial; background:#f3f3f3; margin:40px; }
-.container { max-width:700px; margin:auto; background:white; padding:20px; border-radius:10px; }
-.drop { border:3px dashed #888; padding:40px; text-align:center; margin:20px 0; }
-</style>
-</head>
-<body>
-<div class="container">
-<h2>📁 OCR Server - uses HTTP (without S)</h2>
-
-<form action="/ocr" method="post" enctype="multipart/form-data">
-<div class="drop">
-<input type="file" name="file" multiple>
-</div>
-<button type="submit">Upload</button>
-</form>
-</div>
-</body>
-</html>
+    <head>
+    <meta charset="utf-8">
+    <title>Upload Server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {{ font-family: Arial; background:#f3f3f3; margin:40px; }}
+        .container {{ max-width:700px; margin:auto; background:white; padding:20px; border-radius:10px; }}
+        .drop {{ border:3px dashed #888; padding:40px; text-align:center; margin:20px 0; }}
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>📁 OCR Server - uses HTTP (without S)</h2>
+            <form action="/ocr" method="post" enctype="multipart/form-data">
+                <div class="drop">
+                    <input type="file" name="file" multiple>
+                </div>
+                <button type="submit">Upload</button>
+            </form>
+            {content}
+        </div>
+    </body>
+    </html>
 "#
-        .to_string(),
     )
 }
 
+/// Show the index
+async fn index() -> Html<String> {
+    Html(fill_template(""))
+}
+
 /// Upload function
+#[allow(clippy::too_many_lines)]
 async fn ocr(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<Arc<AppState>>,
@@ -135,7 +139,7 @@ async fn ocr(
             Ok(n) => format!("{}", n.as_secs()),
             Err(_e) => "no_timestamp".to_string(),
         };
-        format!("text_{duration}.txt")
+        format!("text_{duration}.png")
     };
 
     if name.is_empty() {
@@ -154,6 +158,9 @@ async fn ocr(
                 .into_response();
         }
     };
+    if data.is_empty() {
+        return (StatusCode::BAD_REQUEST, "File is empty").into_response();
+    }
     let path = state.upload_dir.join(name);
 
     println!(
@@ -206,16 +213,12 @@ async fn ocr(
             if let Err(_err) = tokio::fs::remove_file(path).await {
                 return (StatusCode::BAD_REQUEST, "Cannot remove file").into_response();
             }
-            (
-                StatusCode::OK,
-                Json(json!({
-                    "text": text,
-                })),
-            )
-                .into_response()
+            let content =
+                format!(r#"<textarea style="width: 100%; height: 100vh">{text}</textarea>"#);
+            (StatusCode::OK, Html(fill_template(&content))).into_response()
         }
         Err(err) => {
-            let msg = format!("Failed to write '{}'", path.display());
+            let msg = format!("Failed to run tesseract '{}'", path.display());
             eprintln!("{} - {msg}: {err}", addr.ip());
             (StatusCode::BAD_REQUEST, msg).into_response()
         }
@@ -249,3 +252,23 @@ async fn run_tesseract(image_path: &Path) -> io::Result<String> {
     // Send/return the response.
     Ok(text)
 }
+//
+// /// run docling
+// /// # Errors
+// /// Errors if fails
+// async fn run_docling(image_path: &Path) -> io::Result<String> {
+//     use docling::DocumentConverter;
+//
+//     let text = timeout(Duration::from_secs(30), async {
+//         let converter = DocumentConverter::new().strict(true);
+//         let result = converter
+//             .convert(SourceDocument::from_file(image_path).unwrap())
+//             .unwrap();
+//         Ok::<_, io::Error>(result.document.export_to_markdown())
+//     })
+//     .await
+//     .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "tesseract timed out"))??;
+//
+//     // Send/return the response.
+//     Ok(text)
+// }
