@@ -6,6 +6,5 @@ members = [
     "n4n5-ocr",
     "music-exporter",
     "git-mover",
-    #"tools/explorer-thumbnailer",
 ]
 default-members = ["n4n5"]
