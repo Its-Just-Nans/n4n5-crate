@@ -69,7 +69,7 @@ impl SpotifyPlatform {
         )?;
         let resp = Client::new()
             .get(url)
-            .header("Authorization", format!("Bearer {}", &self.authorization))
+            .header("Authorization", format!("Bearer {}", self.authorization))
             .header("Accept", "application/json")
             .send()
             .await?;
@@ -123,7 +123,7 @@ impl Platform for SpotifyPlatform {
             )?;
             let url_oauth = url::Url::parse_with_params(
                 "https://accounts.spotify.com/authorize",
-                &[
+                [
                     ("client_id", &id_client),
                     ("response_type", &"code".to_string()),
                     ("redirect_uri", &SPOTIFY_REDIRECT_URI.to_string()),

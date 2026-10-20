@@ -7,12 +7,14 @@ pub struct SpotifyArtist {
     pub name: String,
 }
 
+/// Spoitfy Image
 #[derive(Debug, serde::Deserialize)]
 pub struct SpotifyImage {
     /// Image url
     pub url: String,
 }
 
+/// Spotify Album
 #[derive(Debug, serde::Deserialize)]
 pub struct SpotifyAlbum {
     /// Album release date
@@ -23,6 +25,7 @@ pub struct SpotifyAlbum {
     pub name: String,
 }
 
+/// Track Playlist Item
 #[derive(Debug, serde::Deserialize)]
 pub struct TrackPlaylistItem {
     /// Track name
@@ -37,18 +40,22 @@ pub struct TrackPlaylistItem {
     /// Track external urls
     pub external_urls: SpotifyExternalUrls,
 }
+
+/// Spotify external urls
 #[derive(Debug, serde::Deserialize)]
 pub struct SpotifyExternalUrls {
     /// Spotify url
     pub spotify: String,
 }
 
+/// Playlist item
 #[derive(Debug, serde::Deserialize)]
 pub struct PlaylistItem {
     /// Track item
     pub track: TrackPlaylistItem,
 }
 
+/// Spotify playlist items
 #[derive(Debug, serde::Deserialize)]
 pub struct PlaylistItems {
     /// Next page url
@@ -61,6 +68,7 @@ pub struct PlaylistItems {
     pub items: Vec<PlaylistItem>,
 }
 
+/// Spotify access token
 #[derive(Debug, serde::Deserialize)]
 pub struct SpotifyAccessToken {
     /// Access token

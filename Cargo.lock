@@ -975,30 +975,6 @@ dependencies = [
 
 [[package]]
 name = "git-mover"
-version = "1.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb8dc79aa1855452ec61c850e91a350af56300e8a0d38146bb6ed7d55eddfa9b"
-dependencies = [
- "clap",
- "dotenv",
- "env_logger",
- "git2",
- "home",
- "indicatif",
- "log",
- "rand 0.9.5",
- "reqwest 0.13.5",
- "rpassword",
- "serde",
- "serde_json",
- "tokio",
- "toml 0.9.12+spec-1.1.0",
- "url",
- "urlencoding",
-]
-
-[[package]]
-name = "git-mover"
 version = "1.2.5"
 dependencies = [
  "clap",
@@ -1750,27 +1726,7 @@ checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 
 [[package]]
 name = "music-exporter"
-version = "1.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cbf0bd1340ada8cd9018fc6952656cac24c0216dbc35ebfac4f655b1bc725ed"
-dependencies = [
- "base64 0.22.1",
- "clap",
- "dotenv",
- "env_logger",
- "hyper",
- "hyper-util",
- "log",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "tokio",
- "url",
-]
-
-[[package]]
-name = "music-exporter"
-version = "1.1.6"
+version = "1.1.7"
 dependencies = [
  "base64 0.22.1",
  "clap",
@@ -1795,12 +1751,12 @@ dependencies = [
  "clap_mangen",
  "env_logger",
  "galion",
- "git-mover 1.2.3",
+ "git-mover",
  "home",
  "log",
- "music-exporter 1.1.5",
- "n4n5-ocr 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "n4n5-share 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "music-exporter",
+ "n4n5-ocr",
+ "n4n5-share",
  "pngtools",
  "reqwest 0.13.5",
  "serde",
@@ -1818,30 +1774,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "n4n5-ocr"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df3d9140558bc043b728a4ddb55fd37f0e5ca278b12efaed825f159bea0dde48"
-dependencies = [
- "axum",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "n4n5-share"
 version = "1.0.0"
-dependencies = [
- "axum",
- "mime_guess",
- "tokio",
-]
-
-[[package]]
-name = "n4n5-share"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6b7d5f2abfce61a02eb2cc05ad9ea3fcc205970a5455ba25bc75733db0fc08a"
 dependencies = [
  "axum",
  "mime_guess",

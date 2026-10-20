@@ -20,6 +20,7 @@ pub struct Album {
     // pub cover_xl: String,
 }
 
+/// Track item
 #[derive(Debug, serde::Deserialize)]
 pub struct TrackItem {
     // pub id: i64,
@@ -40,6 +41,7 @@ pub struct TrackItem {
     pub artist: Artist,
 }
 
+/// API response
 #[derive(Debug, serde::Deserialize)]
 pub struct ApiResponse {
     /// Next page URL

@@ -12,7 +12,6 @@ use axum::{
     response::{Html, IntoResponse},
     routing::{get, post},
 };
-use docling::SourceDocument;
 use tokio::fs as tokio_fs;
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
