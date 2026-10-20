@@ -9,6 +9,7 @@ readme = "./README.md"
 keywords = ["utility"]
 categories = ["command-line-utilities"]
 repository = "https://github.com/Its-Just-Nans/n4n5-crate"
+workspace = "../"
 
 [dependencies]
 clap = { version = "4.6", features = ["cargo", "derive"] }
