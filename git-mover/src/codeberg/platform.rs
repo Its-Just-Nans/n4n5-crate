@@ -3,7 +3,7 @@ use reqwest::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use std::pin::Pin;
 use urlencoding::encode;
 
-use super::{repo::CodebergRepo, CODEBERG_URL};
+use super::{CODEBERG_URL, repo::CodebergRepo};
 use crate::{
     errors::GitMoverError,
     platform::{Platform, PlatformType},

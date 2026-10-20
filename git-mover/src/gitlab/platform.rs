@@ -4,9 +4,9 @@ use reqwest::header::CONTENT_TYPE;
 use std::pin::Pin;
 use urlencoding::encode;
 
+use super::GITLAB_URL;
 use super::repo::GitlabRepo;
 use super::repo::GitlabRepoEdition;
-use super::GITLAB_URL;
 
 use crate::errors::GitMoverError;
 use crate::platform::Platform;

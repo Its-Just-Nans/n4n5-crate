@@ -1,6 +1,6 @@
 //! Configuration handling
 use std::{
-    fs::{create_dir_all, read_to_string, File},
+    fs::{File, create_dir_all, read_to_string},
     io::Write,
     path::PathBuf,
 };

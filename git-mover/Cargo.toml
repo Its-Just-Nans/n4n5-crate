@@ -1,6 +1,6 @@
 [package]
 name = "git-mover"
-version = "1.2.3"
+version = "1.2.4"
 edition = "2024"
 keywords = ["utility", "git", "cli"]
 categories = ["command-line-utilities"]
@@ -8,7 +8,7 @@ description = "Move git repositories to a new location"
 license = "MIT"
 readme = "./README.md"
 documentation = "https://docs.rs/git-mover"
-repository = "https://github.com/Its-Just-Nans/git-mover"
+repository = "https://github.com/Its-Just-Nans/n4n5-crate"
 homepage = "https://github.com/Its-Just-Nans/git-mover"
 
 [dependencies]

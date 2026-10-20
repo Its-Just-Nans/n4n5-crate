@@ -420,7 +420,7 @@ dependencies = [
 
 [[package]]
 name = "git-mover"
-version = "1.2.3"
+version = "1.2.4"
 dependencies = [
  "clap",
  "dotenv",

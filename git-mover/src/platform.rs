@@ -2,7 +2,7 @@
 
 use crate::{
     errors::GitMoverError,
-    utils::{check_ssh_access, Repo},
+    utils::{Repo, check_ssh_access},
 };
 use serde::Deserialize;
 use std::pin::Pin;
