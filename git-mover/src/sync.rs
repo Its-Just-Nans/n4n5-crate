@@ -1,6 +1,6 @@
 //! Sync repositories from one platform to another
 use git2::Cred;
-use rand::{Rng, distr::Alphanumeric, rng};
+use rand::{distr::Alphanumeric, rng};
 use std::{fs::remove_dir_all, path::PathBuf, sync::Arc};
 use tokio::task::JoinSet;
 
@@ -20,6 +20,7 @@ pub(crate) async fn sync_repos(
     destination_platform: Arc<Box<dyn Platform>>,
     repos: Vec<Repo>,
 ) -> Result<(), GitMoverError> {
+    use rand::RngExt;
     let rand_string: String = rng()
         .sample_iter(&Alphanumeric)
         .take(10)
@@ -240,7 +241,7 @@ async fn sync_one_repo(
     let refs = repo.references()?;
     for reference in refs {
         let reference = reference?;
-        let Some(ref_name) = reference.name() else {
+        let Ok(ref_name) = reference.name() else {
             continue;
         };
         loog(&format!("Pushing '{ref_name}'..."));
