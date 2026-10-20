@@ -10,6 +10,7 @@ readme = "./README.md"
 documentation = "https://docs.rs/git-mover"
 repository = "https://github.com/Its-Just-Nans/n4n5-crate"
 homepage = "https://github.com/Its-Just-Nans/git-mover"
+workspace = "../"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }

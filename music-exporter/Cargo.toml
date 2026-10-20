@@ -9,6 +9,7 @@ license = "MIT"
 repository = "https://github.com/Its-Just-Nans/n4n5-crate"
 keywords = ["music"]
 categories = ["command-line-utilities"]
+workspace = "../"
 
 [dependencies]
 base64 = "0.22.1"
