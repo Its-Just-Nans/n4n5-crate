@@ -954,7 +954,7 @@ dependencies = [
 
 [[package]]
 name = "git-mover"
-version = "1.2.5"
+version = "1.2.6"
 dependencies = [
  "clap",
  "env_logger",
@@ -1670,7 +1670,7 @@ checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 
 [[package]]
 name = "music-exporter"
-version = "1.1.7"
+version = "1.1.8"
 dependencies = [
  "base64 0.23.1",
  "clap",
@@ -1688,7 +1688,7 @@ dependencies = [
 
 [[package]]
 name = "n4n5"
-version = "1.6.10"
+version = "1.6.11"
 dependencies = [
  "clap",
  "clap_complete",
