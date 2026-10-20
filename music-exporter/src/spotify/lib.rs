@@ -6,11 +6,10 @@ use std::{future::Future, pin::Pin};
 
 use super::types::{PlaylistItems, SpotifyAccessToken};
 use crate::{
-    custom_env,
+    Music, MusicExporter, Platform, custom_env,
     errors::MusicExporterError,
     oauth::listen_for_code,
     utils::{input_env, to_base_64},
-    Music, MusicExporter, Platform,
 };
 
 /// Spotify platform
@@ -83,7 +82,7 @@ impl SpotifyPlatform {
                 return Err(MusicExporterError::new(format!(
                     "Failed to get response for the playlist items {}",
                     err
-                )))
+                )));
             }
         };
         let items = json_response

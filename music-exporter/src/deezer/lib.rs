@@ -6,7 +6,7 @@ use std::{future::Future, pin::Pin};
 
 use super::types::ApiResponse;
 use crate::{
-    custom_env, errors::MusicExporterError, utils::input_env, Music, MusicExporter, Platform,
+    Music, MusicExporter, Platform, custom_env, errors::MusicExporterError, utils::input_env,
 };
 
 /// Deezer platform implementation

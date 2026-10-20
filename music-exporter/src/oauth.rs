@@ -1,7 +1,7 @@
 //! OAuth2 authorization code flow helper
 
 use hyper::service::Service;
-use hyper::{server::conn::http1, Request, Response};
+use hyper::{Request, Response, server::conn::http1};
 use hyper_util::rt::tokio::TokioIo;
 use std::future::Future;
 use std::net::SocketAddr;

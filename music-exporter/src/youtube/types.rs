@@ -8,6 +8,7 @@ pub struct RelatedPlaylists {
     // pub uploads: String,
 }
 
+/// content details
 #[derive(Debug, serde::Deserialize)]
 pub struct ContentDetails {
     /// Related playlists
@@ -15,6 +16,7 @@ pub struct ContentDetails {
     pub related_playlists: RelatedPlaylists,
 }
 
+/// channel
 #[derive(Debug, serde::Deserialize)]
 pub struct Channel {
     /// contentDetails
@@ -22,12 +24,14 @@ pub struct Channel {
     pub content_details: ContentDetails,
 }
 
+/// API response
 #[derive(Debug, serde::Deserialize)]
 pub struct APIResponse {
     /// Items
     pub items: Vec<Channel>,
 }
 
+/// Google access token
 #[derive(Debug, serde::Deserialize)]
 pub struct GoogleAccessToken {
     /// Access token
@@ -37,6 +41,7 @@ pub struct GoogleAccessToken {
     // pub token_type: String,
 }
 
+/// Ressource ID Playlist item
 #[derive(Debug, serde::Deserialize)]
 pub struct ResourceIdPlaylistItem {
     /// Video ID
@@ -44,6 +49,7 @@ pub struct ResourceIdPlaylistItem {
     pub video_id: String,
 }
 
+/// Snippet playlist item
 #[derive(Debug, serde::Deserialize)]
 pub struct SnippetPlaylistItem {
     /// Title
@@ -69,6 +75,7 @@ pub struct PlaylistItem {
     pub snippet: SnippetPlaylistItem,
 }
 
+/// Playlist items
 #[derive(Debug, serde::Deserialize)]
 pub struct PlaylistItems {
     /// Next page token

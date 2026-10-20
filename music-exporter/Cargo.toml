@@ -1,13 +1,12 @@
 [package]
 name = "music-exporter"
-version = "1.1.5"
+version = "1.1.6"
 authors = ["n4n5 <its.just.n4n5@gmail.com>"]
 description = "export music from different sources"
 documentation = "https://docs.rs/music-exporter"
-edition = "2021"
+edition = "2024"
 license = "MIT"
-homepage = "https://github.com/Its-Just-Nans/music-exporter"
-repository = "https://github.com/Its-Just-Nans/music-exporter"
+repository = "https://github.com/Its-Just-Nans/n4n5-crate"
 keywords = ["music"]
 categories = ["command-line-utilities"]
 

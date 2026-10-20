@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    errors::MusicExporterError, music, DeezerPlatform, Music, SpotifyPlatform, YoutubePlatform,
+    DeezerPlatform, Music, SpotifyPlatform, YoutubePlatform, errors::MusicExporterError, music,
 };
 
 /// Platform trait
@@ -245,7 +245,7 @@ impl MusicExporter {
 /// # Errors
 /// Error if the input is not correct
 pub fn input_env(txt: &str, env_name: &str) -> Result<String, MusicExporterError> {
-    use std::io::{stdin, stdout, Write};
+    use std::io::{Write, stdin, stdout};
     if let Ok(val) = std::env::var(env_name) {
         return Ok(val);
     }

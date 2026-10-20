@@ -29,7 +29,7 @@
     clippy::missing_panics_doc,
     clippy::cargo
 )]
-#![warn(clippy::multiple_crate_versions)]
+#![allow(clippy::multiple_crate_versions)]
 
 mod macros;
 pub(crate) mod music;
@@ -47,9 +47,9 @@ pub use spotify::lib::SpotifyPlatform;
 pub use youtube::lib::YoutubePlatform;
 
 pub use errors::MusicExporterError;
-pub use utils::music_exporter_main;
 pub use utils::MusicExporter;
 pub use utils::Platform;
 pub use utils::PlatformType;
+pub use utils::music_exporter_main;
 
 pub(crate) use macros::custom_env;
