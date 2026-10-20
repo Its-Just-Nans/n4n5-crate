@@ -1,4 +1,5 @@
 [workspace]
+resolver = "3"
 members = [
     "n4n5",
     "n4n5-share",
@@ -8,4 +9,3 @@ members = [
     #"tools/explorer-thumbnailer",
 ]
 default-members = ["n4n5"]
-resolver = "2"
