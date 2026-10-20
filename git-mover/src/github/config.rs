@@ -18,6 +18,8 @@ pub struct GithubConfig {
 
 impl GithubConfig {
     /// Get the github platform
+    /// # Errors
+    /// Fails if configuration error
     pub fn get_plateform(config: &mut GitMoverConfig) -> Result<GithubPlatform, GitMoverError> {
         let username = config_value_wrap!(
             config,

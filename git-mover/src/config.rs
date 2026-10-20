@@ -26,6 +26,7 @@ pub struct GitMoverConfig {
     pub cli_args: GitMoverCli,
 }
 
+/// Configuration data
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 pub struct ConfigData {
     /// Gitlab configuration

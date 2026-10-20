@@ -17,6 +17,8 @@ pub struct CodebergConfig {
 
 impl CodebergConfig {
     /// Get the codeberg platform
+    /// # Errors
+    /// Error on config error
     pub fn get_plateform(config: &mut GitMoverConfig) -> Result<CodebergPlatform, GitMoverError> {
         let username = config_value_wrap!(
             config,

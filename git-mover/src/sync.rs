@@ -12,6 +12,8 @@ use crate::platform::Platform;
 use crate::utils::{Repo, input, yes_no_input};
 
 /// Sync repositories from one platform to another
+/// # Errors
+/// Sync error
 pub(crate) async fn sync_repos(
     config: &GitMoverConfig,
     source_platform: Arc<Box<dyn Platform>>,
@@ -66,7 +68,7 @@ pub(crate) async fn sync_repos(
             pb
         };
         if config.cli_args.manual {
-            let question = format!("Should sync repo {} (y/n)", &repo_name);
+            let question = format!("Should sync repo {repo_name} (y/n)");
             let should_sync = yes_no_input(&question)?;
             let pb = create_pb(&m, idx, total);
             if should_sync {
@@ -109,6 +111,8 @@ pub(crate) async fn sync_repos(
 }
 
 /// Sync private repositories from one platform to another
+/// # Errors
+/// Error on sync error
 async fn sync_private_repos(
     source_platform: Arc<Box<dyn Platform>>,
     destination_platform: Arc<Box<dyn Platform>>,
@@ -164,6 +168,8 @@ fn get_style() -> Option<ProgressStyle> {
 }
 
 /// Sync one repository from one platform to another
+/// # Errors
+/// Error on sync error
 async fn sync_one_repo(
     source_platform: Arc<Box<dyn Platform>>,
     destination_platform: Arc<Box<dyn Platform>>,
@@ -198,10 +204,9 @@ async fn sync_one_repo(
     builder.fetch_options(fetch_opts);
 
     let url = format!(
-        "git@{}:{}/{}.git",
+        "git@{}:{}/{repo_name}.git",
         source_platform.get_remote_url(),
         source_platform.get_username(),
-        &repo_name
     );
 
     loog(&format!(
@@ -216,10 +221,9 @@ async fn sync_one_repo(
         tmp_repo_path.display(),
     ));
     let next_remote = format!(
-        "git@{}:{}/{}.git",
+        "git@{}:{}/{repo_name}.git",
         destination_platform.get_remote_url(),
         destination_platform.get_username(),
-        &repo_name
     );
     let new_remote_name = "new_origin";
     loog(&format!("Adding remote {new_remote_name} to {next_remote}"));
@@ -256,6 +260,8 @@ async fn sync_one_repo(
 }
 
 /// Delete repositories from a platform
+/// # Errors
+/// Error on API error
 pub(crate) async fn delete_repos(
     destination_platform: Arc<Box<dyn Platform>>,
     repos: Vec<&Repo>,

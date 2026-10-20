@@ -20,6 +20,8 @@ pub struct GitlabConfig {
 
 impl GitlabConfig {
     /// Get Gitlab platform
+    /// # Errors
+    /// Errors on config error
     pub fn get_plateform(config: &mut GitMoverConfig) -> Result<GitlabPlatform, GitMoverError> {
         let username = config_value_wrap!(
             config,

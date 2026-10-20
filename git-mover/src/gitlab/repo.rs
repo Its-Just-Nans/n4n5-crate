@@ -22,12 +22,14 @@ pub struct GitlabRepo {
     pub forked_from_project: Option<ForkRepo>,
 }
 
+/// fork repo
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 pub struct ForkRepo {
     /// Forked from project id
     pub id: u64,
 }
 
+/// Gitlab repo edition
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct GitlabRepoEdition {
     /// Repo name

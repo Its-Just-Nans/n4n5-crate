@@ -56,6 +56,8 @@ pub enum Direction {
 }
 
 /// Get a number from the user
+/// # Errors
+/// Error if input error
 pub fn input_number() -> Result<usize, GitMoverError> {
     loop {
         match input()?.parse::<usize>() {
@@ -68,6 +70,8 @@ pub fn input_number() -> Result<usize, GitMoverError> {
 }
 
 /// check git access
+/// # Errors
+/// Fails on ssh failure
 pub(crate) async fn check_ssh_access<S: AsRef<str>>(
     ssh_url: S,
 ) -> Result<(String, String), GitMoverError> {
@@ -96,6 +100,8 @@ pub(crate) async fn check_ssh_access<S: AsRef<str>>(
 }
 
 /// Get the platform to use
+/// # Errors
+/// Get the platform from args
 pub(crate) fn get_plateform(
     config: &mut GitMoverConfig,
     direction: &Direction,
@@ -323,6 +329,8 @@ pub async fn main_sync(config: GitMoverConfig) -> Result<(), GitMoverError> {
 }
 
 /// Get input from the user
+/// # Errors
+/// Input error
 pub(crate) fn input() -> Result<String, GitMoverError> {
     use std::io::{Write, stdin, stdout};
     let mut s = String::new();
@@ -340,26 +348,31 @@ pub(crate) fn input() -> Result<String, GitMoverError> {
 }
 
 /// Get a yes/no input from the user
+/// # Errors
+/// Input error
 pub(crate) fn yes_no_input<S: AsRef<str>>(msg: S) -> Result<bool, GitMoverError> {
     let msg = msg.as_ref();
     loop {
         println!("{msg}");
         let input = input()?;
         match input.to_lowercase().as_str() {
-            "yes" | "y" | "Y" | "YES" | "Yes " => return Ok(true),
-            "no" | "n" | "N" | "NO" | "No" => return Ok(false),
+            "yes" | "y" => return Ok(true),
+            "no" | "n" => return Ok(false),
             _ => println!("Invalid input"),
         }
     }
 }
 
 /// Get password from the user
+/// # Errors
+/// Input error
 pub(crate) fn get_password() -> Result<String, GitMoverError> {
     rpassword::read_password()
         .map_err(|e| GitMoverError::new_with_source("Error reading password", e))
 }
 
 #[cfg(test)]
+#[allow(clippy::missing_panics_doc)]
 mod test {
 
     use super::*;
@@ -387,8 +400,8 @@ mod test {
             private: true,
             fork: false,
         };
-        assert!(repo1 == repo2);
-        assert!(repo1 != repo3);
+        assert_eq!(repo1, repo2);
+        assert_ne!(repo1, repo3);
         assert_eq!(repo1, repo2);
     }
 }
