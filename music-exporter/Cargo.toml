@@ -1,0 +1,26 @@
+[package]
+name = "music-exporter"
+version = "1.1.5"
+authors = ["n4n5 <its.just.n4n5@gmail.com>"]
+description = "export music from different sources"
+documentation = "https://docs.rs/music-exporter"
+edition = "2021"
+license = "MIT"
+homepage = "https://github.com/Its-Just-Nans/music-exporter"
+repository = "https://github.com/Its-Just-Nans/music-exporter"
+keywords = ["music"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+base64 = "0.22.1"
+clap = { version = "4.5.53", features = ["derive"] }
+dotenv = "0.15.0"
+env_logger = "0.11.8"
+hyper = { version = "1.8", features = ["server", "http1"] }
+hyper-util = "0.1.18"
+log = "0.4.28"
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+url = "2.5.7"
