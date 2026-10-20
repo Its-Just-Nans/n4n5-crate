@@ -7,7 +7,7 @@ pub struct SpotifyArtist {
     pub name: String,
 }
 
-/// Spoitfy Image
+/// Spotify Image
 #[derive(Debug, serde::Deserialize)]
 pub struct SpotifyImage {
     /// Image url

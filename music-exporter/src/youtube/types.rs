@@ -41,7 +41,7 @@ pub struct GoogleAccessToken {
     // pub token_type: String,
 }
 
-/// Ressource ID Playlist item
+/// Resource ID Playlist item
 #[derive(Debug, serde::Deserialize)]
 pub struct ResourceIdPlaylistItem {
     /// Video ID
