@@ -8,7 +8,7 @@ license = "MIT"
 readme = "./README.md"
 keywords = ["utility"]
 categories = ["command-line-utilities"]
-repository = "https://github.com/Its-Just-Nans/n4n5-crate"
+repository = "https://github.com/Its-Just-Nans/n4n5-utilities"
 
 [dependencies]
 tokio = { version = "1.54", features = ["rt-multi-thread", "fs", "process", "io-util"] }
